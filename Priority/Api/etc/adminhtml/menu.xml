@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="Priority_Api::api" title="Priority Api" module="Priority_Api" sortOrder="10" resource="Priority_Api::api" />
+		<add id="Priority_Api::api_config" title="API Settings" module="Priority_Api" sortOrder="10" parent="Priority_Api::api" action="adminhtml/system_config/edit/section/settings" resource="Priority_Api::api_config"/>
+		<add id="Priority_Api::api_test_unit" title="API Test Unit" module="Priority_Api" sortOrder="20" parent="Priority_Api::api" action="adminhtml/system_config/edit/section/test_unit" resource="Priority_Api::api_config"/>
+		<add id="Priority_Api::api_general_settings" title="Genreal Settings" module="Priority_Api" sortOrder="30" parent="Priority_Api::api" action="adminhtml/system_config/edit/section/general_settings" resource="Priority_Api::api_config"/>
+		<add id="Priority_Api::api_transctions" title="Transactions" module="Priority_Api" sortOrder="40" parent="Priority_Api::api" action="priority_api/transactions/index" resource="Priority_Api::api_transctions"/>
+		<add id="Priority_Api::api_priority" title="API Orders" module="Priority_Api" sortOrder="10" parent="Priority_Api::api" action="sales/order" resource="Priority_Api::api_config"/>
+	</menu>
+</config>

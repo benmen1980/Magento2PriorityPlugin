@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
+    <group id="default">
+        <job name="priority_api_sync_item_cron" instance="Priority\Api\Controller\Adminhtml\System\Config\Syncitem" method="execute">
+        	<config_path>crontab/default/jobs/priority_api_sync_item_cron/schedule/cron_expr</config_path>
+        </job>
+		<job name="priority_api_sync_inventory_cron" instance="Priority\Api\Controller\Adminhtml\System\Config\Inventory" method="execute">
+        	<config_path>crontab/default/jobs/priority_api_sync_inventory_cron/schedule/cron_expr</config_path>
+        </job>
+		<job name="priority_api_sync_order_cron" instance="Priority\Api\Controller\Adminhtml\System\Config\Order" method="execute">
+        	<config_path>crontab/default/jobs/priority_api_sync_order_cron/schedule/cron_expr</config_path>
+        </job>
+    </group>
+</config>

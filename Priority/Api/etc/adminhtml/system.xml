@@ -1,0 +1,144 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="priority" translate="label" sortOrder="100">
+            <label>Priority Api</label>
+        </tab>
+        <section id="settings" translate="label" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="1">
+            <class>separator-top</class>
+            <label>API Settings</label>
+            <tab>priority</tab>
+            <resource>Priority_Api::api_config</resource>
+            <group id="general" translate="label" type="text" sortOrder="10"  showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>General Configuration</label>
+                <field id="application" translate="label" type="text" sortOrder="1"  showInDefault="1"  showInWebsite="1" showInStore="1" >
+                    <label>Application</label>
+                </field>
+                <field id="environment_name" translate="label" type="text" sortOrder="2"  showInDefault="1" showInWebsite="1" showInStore="1" >
+                    <label>Environment Name</label>
+                </field>
+				<field id="language" translate="label" type="text" sortOrder="3"  showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Language</label>
+                </field>
+				<field id="url" translate="label" type="text" sortOrder="4"  showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Url</label>
+                </field>
+				<field id="username" translate="label" type="text" sortOrder="5"  showInDefault="1"  showInWebsite="1" showInStore="1" >
+                    <label>Username</label>
+                </field>
+				<field id="password" translate="label" type="text" sortOrder="6"  showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Password</label>
+                </field>
+				<field id="app_id" translate="label" type="text" sortOrder="7"  showInDefault="1"  showInWebsite="1" showInStore="1" >
+                    <label>X-App-Id</label>
+                </field>
+				<field id="app_key" translate="label" type="text" sortOrder="8"  showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>X-App-Key</label>
+                </field>
+				<field id="ssl_verify" translate="label" type="select" sortOrder="9"  showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>SSL Verify</label>
+					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+            </group>
+        </section>
+		<section id="test_unit" translate="label" sortOrder="150" showInDefault="1" showInWebsite="1" showInStore="1">
+            <class>separator-top</class>
+            <label>API Test Unit</label>
+            <tab>priority</tab>
+            <resource>Priority_Api::api_config</resource>
+            <group id="testunit_config" translate="label" type="text" sortOrder="10"  showInDefault="1" showInWebsite="0" showInStore="0">
+                <field id="url_addition" translate="label" type="text" sortOrder="1"  showInDefault="1"  showInWebsite="1" showInStore="1" >
+                    <label>URL Addition</label>
+                </field>
+                <field id="json_request" translate="label" type="textarea" sortOrder="2"  showInDefault="1" showInWebsite="1" showInStore="1" >
+                    <label>JSON Request</label>
+                </field>
+				<field id="action" translate="label" type="select" sortOrder="3"  showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Action</label>
+					<source_model>Priority\Api\Model\Config\Source\Action</source_model>
+                </field>
+				<field id="json_response" translate="label" type="textarea" sortOrder="4"  showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>JSON Response</label>
+                </field>
+				<field id="send_request" translate="label" type="button" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="1">
+					<frontend_model>Priority\Api\Block\System\Config\Button</frontend_model>
+                </field>
+            </group>
+        </section>
+		<section id="general_settings" translate="label" sortOrder="160" showInDefault="1" showInWebsite="1" showInStore="1">
+            <class>separator-top</class>
+            <label>General Settings</label>
+            <tab>priority</tab>
+            <resource>Priority_Api::api_config</resource>
+            <group id="general_config" translate="label" type="text" sortOrder="10"  showInDefault="1" showInWebsite="0" showInStore="0">
+				<label>Shippment Settings</label>
+                <field id="sku_shippment_item" translate="label" type="text" sortOrder="1"  showInDefault="1"  showInWebsite="1" showInStore="1" >
+                    <label>SKU Shippment Item</label>
+                </field>		
+            </group>
+			<group id="sync_config" translate="label" type="text" sortOrder="20"  showInDefault="1" showInWebsite="0" showInStore="0">
+				<label>API Items Sync</label>
+				<field id="sync_item" translate="label" type="button" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+					<frontend_model>Priority\Api\Block\System\Config\Sync</frontend_model>
+                </field>
+				<field id="sync_inventory" translate="label" type="button" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+					<frontend_model>Priority\Api\Block\System\Config\SyncInventory</frontend_model>
+                </field> 				
+			</group>
+			<group id="configurable_cron_syncitem" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
+				<label>API Items Sync Cron Settings</label>
+				<field id="itemfrequency" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="0" showInStore="0">
+					<label>Frequency</label>
+					<source_model>Magento\Cron\Model\Config\Source\Frequency</source_model>
+					<backend_model>Priority\Api\Model\Config\CronConfig</backend_model>
+				</field>
+				<field id="itemtime" translate="label comment" sortOrder="2" type="time" showInDefault="1" showInWebsite="1" showInStore="1">
+					<label>Start Time</label>
+				</field>
+				<field id="itemsynclog" translate="label" sortOrder="3" type="select" showInDefault="1">
+					<label>Write to log?</label>
+					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+				</field>
+			</group>
+			<group id="configurable_cron_syncinventory" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+				<label>API Inventory Sync Cron Settings</label>
+				<field id="inventoryfrequency" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="0" showInStore="0">
+					<label>Frequency</label>
+					<source_model>Magento\Cron\Model\Config\Source\Frequency</source_model>
+					<backend_model>Priority\Api\Model\Config\CronConfigInventory</backend_model>
+				</field>
+				<field id="inventorytime" translate="label comment" sortOrder="2" type="time" showInDefault="1" showInWebsite="1" showInStore="1">
+					<label>Start Time</label>
+				</field>
+				<field id="inventorysynclog" translate="label" sortOrder="3" type="select" showInDefault="1" >
+					<label>Write to log?</label>
+					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+				</field>
+			</group>
+			<group id="configurable_cron_syncorder" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+				<label>API Orders Sync Cron Settings</label>
+				<field id="orderfrequency" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="0" showInStore="0">
+					<label>Frequency</label>
+					<source_model>Magento\Cron\Model\Config\Source\Frequency</source_model>
+					<backend_model>Priority\Api\Model\Config\CronConfigOrder</backend_model>
+				</field>
+				<field id="ordertime" translate="label comment" sortOrder="2" type="time" showInDefault="1" showInWebsite="1" showInStore="1">
+					<label>Start Time</label>
+				</field>
+				<field id="ordersynclog" translate="label" sortOrder="3" type="select" showInDefault="1" >
+					<label>Write to log?</label>
+					<source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+				</field>
+			</group>
+			<group id="more_settings_config" translate="label" type="text" sortOrder="50"  showInDefault="1" showInWebsite="0" showInStore="0">
+				<label>More Settings</label>
+				<field id="mailing_list" translate="label" type="text" sortOrder="1"  showInDefault="1"  showInWebsite="1" showInStore="1" >
+                    <label>Mailing list for API errors</label>
+                </field>	
+				<field id="walk_in_customer" translate="label" type="text" sortOrder="1"  showInDefault="1"  showInWebsite="1" showInStore="1" >
+                    <label>Walk-In Customer</label>
+                </field>
+			</group>
+        </section>
+    </system>
+</config>

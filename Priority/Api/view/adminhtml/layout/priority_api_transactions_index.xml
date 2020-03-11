@@ -1,0 +1,11 @@
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../../../lib/internal/Magento/Framework/View/Layout/etc/page_configuration.xsd">
+    <update handle="styles"/>
+	<head>
+		<css src="Priority_Api::css/custom.css"/>
+	</head>
+    <body>
+        <referenceContainer name="content">
+            <uiComponent name="priority_api_transactions_listing"/>
+        </referenceContainer>
+    </body>
+</page>

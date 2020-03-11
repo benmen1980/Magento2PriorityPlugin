@@ -1,0 +1,23 @@
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../lib/internal/Magento/Framework/ObjectManager/etc/config.xsd">
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
+        <arguments>
+            <argument name="collections" xsi:type="array">
+                <item name="priority_api_transactions_listing_data_source" xsi:type="string">Priority\Api\Model\ResourceModel\Transactions\Grid\Collection</item>
+            </argument>
+        </arguments>
+    </type>
+    <virtualType name="Priority\Api\Model\ResourceModel\Transactions\Grid\Collection" type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">test_unit_transactions</argument>
+            <argument name="resourceModel" xsi:type="string">Priority\Api\Model\ResourceModel\Transactions</argument>
+        </arguments>
+    </virtualType>
+	<preference for="Magento\Framework\View\TemplateEngine\Xhtml\Template" type="Priority\Api\View\TemplateEngine\Xhtml\Template"></preference>
+
+    <!-- <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
+        <plugin name="sales_order_additional_columns" type="Priority\Api\Plugin\SalesOrderApiColumn" sortOrder="10" disabled="false" />
+    </typ -->
+	<type name="\Magento\Sales\Block\Adminhtml\Order\View">
+        <plugin name="sendOrderView" type="Priority\Api\Plugin\PluginBtnOrderView" />
+    </type>
+</config>
