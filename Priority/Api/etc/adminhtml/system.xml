@@ -88,12 +88,12 @@
 			<group id="configurable_cron_syncitem" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
 				<label>API Items Sync Cron Settings</label>
 				<field id="itemfrequency" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="0" showInStore="0">
-					<label>Frequency</label>
-					<source_model>Magento\Cron\Model\Config\Source\Frequency</source_model>
+					<label>Frequency Unit</label>
+					<source_model>Priority\Api\Model\Config\Source\Frequency</source_model>
 					<backend_model>Priority\Api\Model\Config\CronConfig</backend_model>
 				</field>
-				<field id="itemtime" translate="label comment" sortOrder="2" type="time" showInDefault="1" showInWebsite="1" showInStore="1">
-					<label>Start Time</label>
+				<field id="itemtime" translate="label comment" sortOrder="2" type="text" showInDefault="1" showInWebsite="1" showInStore="1">
+					<label>Frequency</label>
 				</field>
 				<field id="itemsynclog" translate="label" sortOrder="3" type="select" showInDefault="1">
 					<label>Write to log?</label>
@@ -103,12 +103,12 @@
 			<group id="configurable_cron_syncinventory" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
 				<label>API Inventory Sync Cron Settings</label>
 				<field id="inventoryfrequency" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="0" showInStore="0">
-					<label>Frequency</label>
-					<source_model>Magento\Cron\Model\Config\Source\Frequency</source_model>
+					<label>Frequency Unit</label>
+					<source_model>Priority\Api\Model\Config\Source\Frequency</source_model>
 					<backend_model>Priority\Api\Model\Config\CronConfigInventory</backend_model>
 				</field>
-				<field id="inventorytime" translate="label comment" sortOrder="2" type="time" showInDefault="1" showInWebsite="1" showInStore="1">
-					<label>Start Time</label>
+				<field id="inventorytime" translate="label comment" sortOrder="2" type="text" showInDefault="1" showInWebsite="1" showInStore="1">
+					<label>Frequency</label>
 				</field>
 				<field id="inventorysynclog" translate="label" sortOrder="3" type="select" showInDefault="1" >
 					<label>Write to log?</label>
@@ -118,12 +118,12 @@
 			<group id="configurable_cron_syncorder" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
 				<label>API Orders Sync Cron Settings</label>
 				<field id="orderfrequency" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="0" showInStore="0">
-					<label>Frequency</label>
-					<source_model>Magento\Cron\Model\Config\Source\Frequency</source_model>
+					<label>Frequency Unit</label>
+					<source_model>Priority\Api\Model\Config\Source\Frequency</source_model>
 					<backend_model>Priority\Api\Model\Config\CronConfigOrder</backend_model>
 				</field>
-				<field id="ordertime" translate="label comment" sortOrder="2" type="time" showInDefault="1" showInWebsite="1" showInStore="1">
-					<label>Start Time</label>
+				<field id="ordertime" translate="label comment" sortOrder="2" type="text" showInDefault="1" showInWebsite="1" showInStore="1">
+					<label>Frequency</label>
 				</field>
 				<field id="ordersynclog" translate="label" sortOrder="3" type="select" showInDefault="1" >
 					<label>Write to log?</label>
@@ -140,5 +140,159 @@
                 </field>
 			</group>
         </section>
+		<section id="carriers" type="text" sortOrder="320" showInDefault="1" showInWebsite="1" showInStore="1">
+			<group id="flatrate">
+				<field id="priority_code" translate="label" type="text" sortOrder="4"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+                    <label>Priority Code</label>
+                </field>
+			</group>
+			<group id="tablerate">
+				<field id="priority_code" translate="label" type="text" sortOrder="4"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+                    <label>Priority Code</label>
+                </field>
+			</group>
+			<group id="freeshipping">
+				<field id="priority_code" translate="label" type="text" sortOrder="4"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+                    <label>Priority Code</label>
+                </field>
+			</group>
+			<group id="temando">
+				<field id="priority_code" translate="label" type="text" sortOrder="4"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+                    <label>Priority Code</label>
+                </field>
+			</group>
+			<group id="ups">
+				<field id="priority_code" translate="label" type="text" sortOrder="26"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+                    <label>Priority Code</label>
+                </field>
+			</group>
+			<group id="usps">
+				<field id="priority_code" translate="label" type="text" sortOrder="30"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+                    <label>Priority Code</label>
+                </field>
+			</group>
+			<group id="dhl">
+				<field id="priority_code" translate="label" type="text" sortOrder="30"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+                    <label>Priority Code</label>
+                </field>
+			</group>
+			<group id="fedex">
+				<field id="priority_code" translate="label" type="text" sortOrder="30"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+                    <label>Priority Code</label>
+                </field>
+			</group>
+			<group id="panexdel">
+				<field id="priority_code" translate="label" type="text" sortOrder="4"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+                    <label>Priority Code</label>
+                </field>
+			</group>
+			<group id="panexpick">
+				<field id="priority_code" translate="label" type="text" sortOrder="4"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+                    <label>Priority Code</label>
+                </field>
+			</group>
+			<group id="panstpick">
+				<field id="priority_code" translate="label" type="text" sortOrder="4"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+                    <label>Priority Code</label>
+                </field>
+			</group>
+			<group id="paneildel">
+				<field id="priority_code" translate="label" type="text" sortOrder="4"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+                    <label>Priority Code</label>
+                </field>
+			</group>
+			<group id="paneilpick">
+				<field id="priority_code" translate="label" type="text" sortOrder="4"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+                    <label>Priority Code</label>
+                </field>
+			</group>
+			<group id="panlogst">
+				<field id="priority_code" translate="label" type="text" sortOrder="4"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+                    <label>Priority Code</label>
+                </field>
+			</group>
+			<group id="sryellowshipping">
+				<field id="priority_code" translate="label" type="text" sortOrder="4"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+                    <label>Priority Code</label>
+                </field>
+			</group>
+			<group id="srbuzzrshipping">
+				<field id="priority_code" translate="label" type="text" sortOrder="4"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+                    <label>Priority Code</label>
+                </field>
+			</group>
+		</section>
+		<section id="payment" type="text" sortOrder="400" showInDefault="1" showInWebsite="1" showInStore="1">
+			<group id="free">
+				<field id="priority_code" translate="label" type="text" sortOrder="30"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+                    <label>Priority Code</label>
+                </field>
+			</group>
+			<group id="checkmo">
+				<field id="priority_code" translate="label" type="text" sortOrder="30"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+                    <label>Priority Code</label>
+                </field>
+			</group>
+			<group id="purchaseorder">
+				<field id="priority_code" translate="label" type="text" sortOrder="30"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+                    <label>Priority Code</label>
+                </field>
+			</group>
+			<group id="banktransfer">
+				<field id="priority_code" translate="label" type="text" sortOrder="30"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+                    <label>Priority Code</label>
+                </field>
+			</group>
+			<group id="cashondelivery">
+				<field id="priority_code" translate="label" type="text" sortOrder="30"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+                    <label>Priority Code</label>
+                </field>
+			</group>
+			<group id="klarna_section">
+                <group id="klarna">
+					<field id="priority_code" translate="label" type="text" sortOrder="30"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+						<label>Priority Code</label>
+					</field>
+				</group>
+			</group>
+			<group id="amazon_payment">
+				<group id="options">
+					<field id="priority_code" translate="label" type="text" sortOrder="30"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+						<label>Priority Code</label>
+					</field>
+				</group>
+			</group>
+			<group id="srcreditguard">
+				<field id="priority_code" translate="label" type="text" sortOrder="120"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+						<label>Priority Code</label>
+				</field>
+			</group>
+			<group id="authorizenet_acceptjs">
+				<field id="priority_code" translate="label" type="text" sortOrder="12"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+						<label>Priority Code</label>
+				</field>
+			</group>
+			<group id="authorizenet_directpost">
+				<field id="priority_code" translate="label" type="text" sortOrder="30"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+						<label>Priority Code</label>
+				</field>
+			</group>
+			<group id="express_checkout">
+				<group id="express_checkout_required"> 
+					<field id="priority_code" translate="label" type="text" sortOrder="30"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+							<label>Priority Code</label>
+					</field>
+				</group>
+			</group>
+			<group id="braintree_section">
+				<group id="braintree">
+					 <group id="braintree_paypal">
+						<field id="priority_code" translate="label" type="text" sortOrder="30"  showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1" >
+							<label>Priority Code</label>
+						</field>
+					</group>
+				</group>
+			</group>
+		</section>
     </system>
 </config>

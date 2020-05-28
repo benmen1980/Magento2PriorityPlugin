@@ -26,7 +26,7 @@ class Responsepopupdata extends \Magento\Ui\Component\Listing\Columns\Column
 			
 			$objectManager = \Magento\Framework\App\ObjectManager::getInstance();
 			
-			$messages = $objectManager->create('Priority\Api\Model\ResourceModel\Transactions\Collection')->addFieldToFilter('order_increment_id', $item['increment_id']);
+			$messages = $objectManager->create('Priority\Api\Model\ResourceModel\Transactions\Collection')->addFieldToFilter('order_increment_id', $item['increment_id'])->setOrder('entity_id', 'DESC')->setPageSize(1);
 				$data=$messages->getData();
 				$jresponse=array_column($data,'json_response');
 				

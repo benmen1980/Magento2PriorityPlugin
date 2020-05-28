@@ -31,13 +31,15 @@ class CustomerCreate implements ObserverInterface
 		$enviroment = $this->scopeConfig->getValue("settings/general/environment_name", $storeScope); 
 		$url = $this->scopeConfig->getValue("settings/general/url", $storeScope);
 		$ssl_verify = $this->scopeConfig->getValue("settings/general/ssl_verify", $storeScope);
-		$language = $this->_scopeConfig->getValue("settings/general/language", $storeScope);
+		$language = $this->scopeConfig->getValue("settings/general/language", $storeScope);
+		$appId = $this->scopeConfig->getValue("settings/general/app_id",$storeScope);
+		$appKey = $this->scopeConfig->getValue("settings/general/app_key",$storeScope);
 		$headers = array('Content-Type: application/json');
 		if($ssl_verify == 1){
 			$ssl = 'TRUE';
 		} else {
 			$ssl = 'FALSE';
-		}	
+		}	 
 		$additional = "/CUSTOMERS";
 		$firstname = $customer->getFirstName();
 		$lastname = $customer->getLastName();
@@ -45,7 +47,7 @@ class CustomerCreate implements ObserverInterface
 		$email = $customer->getEmail();
 		$billingAddressId = $customer->getDefaultBilling();
 		$address = $objectManager->get('Magento\Customer\Model\AddressFactory')->create()->load($billingAddressId);
-		$street = $address->getStreet();				
+		$street = $address->getStreetFull();				
 		$city = $address->getCity();
 		$telephone = $address->getTelephone();
 		if($middlename != ""){
@@ -58,14 +60,18 @@ class CustomerCreate implements ObserverInterface
 			"CUSTDES"  => $name,
 			"PHONE"    => $telephone,
 			"EMAIL"	   => $email,
-			"ADDRESS"  => $address->getStreet(1),
-			"ADDRESS2" => $address->getStreet(2),
+			"ADDRESS"  => $street,
+			"ADDRESS2" => "",
 			"STATEA"   => $city 
 		);
-		$json_request = json_encode($params);
+		$json_request = json_encode($params,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
 		$request_uri = "https://".$url."/odata/Priority/".$application.",".$language."/".$enviroment.$additional;
 		$ch = curl_init($request_uri);
-		curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+			'Content-Type: application/json',
+			'X-App-Id:'.$appId,
+			'X-App-Key:'.$appKey
+		));
 		curl_setopt($ch, CURLOPT_HEADER, 0);
 		curl_setopt($ch, CURLOPT_USERPWD, $username . ":" . $password);
 		curl_setopt($ch, CURLOPT_TIMEOUT, 30);
@@ -80,13 +86,13 @@ class CustomerCreate implements ObserverInterface
 		if($httpCode == '200' || $httpCode == '201')
 		{
 			$status = "Success";
-			$json_pretty = json_encode(json_decode($response), JSON_PRETTY_PRINT);
+			$json_pretty = json_encode(json_decode($response), JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
 		} else {
 			$status = "Failed";
 			$json_pretty = $response;
 		}
-		$json_request = json_encode(json_decode($json_request), JSON_PRETTY_PRINT);
 		
+		$json_request = json_encode(json_decode($json_request),JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
 		$model = $this->_transactions->create();
 		$model->addData([
 			"url" => $request_uri,

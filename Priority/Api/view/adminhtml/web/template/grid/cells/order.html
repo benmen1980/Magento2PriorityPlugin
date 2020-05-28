@@ -1,0 +1,12 @@
+<form id="send-mail-form-<%- customerid %>" method="get" enctype="multipart/form-data" action="<%- formaction %>">
+    <div class="modal-body">
+        <div class="bootbox-body">
+			<label style="font-size:20px;">JSON Request</label>
+            <textarea class="bootbox-input bootbox-input-text form-control required-entry" name="send_message" rows="15" cols="100" style="margin-top:10px;margin-bottom:10px"><%- requestcontent %></textarea>
+			<label style="font-size:20px">JSON Response</label>
+			<textarea class="bootbox-input bootbox-input-text form-control required-entry" name="send_message" rows="15" cols="100" style="margin-top:10px;margin-bottom:10px"><%- responsecontent %></textarea>
+            <input type="hidden" name="entity_id" value="<%- customerid %>">
+        </div>
+
+    </div>
+</form>

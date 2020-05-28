@@ -31,27 +31,56 @@ class CronConfigOrder extends \Magento\Framework\App\Config\Value
     public function afterSave()
     {
 		
-        $orderItem = $this->getData('groups/configurable_cron_syncorder/fields/ordertime/value');
+        // $orderItem = $this->getData('groups/configurable_cron_syncorder/fields/ordertime/value');
+        // $frequencyOrder = $this->getData('groups/configurable_cron_syncorder/fields/orderfrequency/value');
+		// if($orderItem[1] == '00' || $orderItem[1] == '01'){
+			// $minutes = "*";
+		// } else {
+			// $minutes = "*/".intval($orderItem[1]);
+		// }
+		// if($orderItem[0] == '00'){
+			// $hours = "*";
+		// } else {
+			// $hours = intval($orderItem[0]);
+		// }
+        // $cronExprItem = [
+            // $minutes, //Minutes
+            // $hours, //hour
+            // $frequencyOrder == \Magento\Cron\Model\Config\Source\Frequency::CRON_MONTHLY ? '1' : '*',
+            // '*', //Month of the Year
+            // $frequencyOrder == \Magento\Cron\Model\Config\Source\Frequency::CRON_WEEKLY ? '1' : '*', //Day of the Week
+        // ];
+        // $cronExprString = join(' ', $cronExprItem);
+		
+		$orderItem = $this->getData('groups/configurable_cron_syncorder/fields/ordertime/value');
         $frequencyOrder = $this->getData('groups/configurable_cron_syncorder/fields/orderfrequency/value');
-		if($orderItem[1] == '00' || $orderItem[1] == '01'){
-			$minutes = "*";
-		} else {
-			$minutes = "*/".intval($orderItem[1]);
+        
+		if($frequencyOrder == 'M')
+		{
+			if($orderItem!="0")
+			{
+				$minutes="*/".$orderItem." * * * *";
+			}
+			else
+			{
+				$minutes="* * * * *";
+			}
+			
+			$cronExprString=$minutes;
 		}
-		if($orderItem[0] == '00'){
-			$hours = "*";
-		} else {
-			$hours = intval($orderItem[0]);
-		}
-        $cronExprItem = [
-            $minutes, //Minutes
-            $hours, //hour
-            $frequencyOrder == \Magento\Cron\Model\Config\Source\Frequency::CRON_MONTHLY ? '1' : '*',
-            '*', //Month of the Year
-            $frequencyOrder == \Magento\Cron\Model\Config\Source\Frequency::CRON_WEEKLY ? '1' : '*', //Day of the Week
-        ];
-        $cronExprString = join(' ', $cronExprItem);
 
+		if($frequencyOrder == 'H')
+		{
+			if($orderItem!="0")
+			{
+				$hours="0 */".$orderItem." * * * *";
+			}
+			else
+			{
+				$hours="0 * * * *";
+			}
+			$cronExprString=$hours;
+		}
         try {
             $this->_configValueFactory->create()->load(
                 self::CRON_STRING_PATH_ITEM,
