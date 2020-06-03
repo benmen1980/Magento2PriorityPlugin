@@ -150,7 +150,7 @@ class Repost extends \Magento\Backend\App\Action
 			$shipcharge = array(
 				"PARTNAME" => $ship,
 				"TQUANT" => 1,
-				"VPRICE" => floatval($order->getShippingAmount())		
+				"VPRICE" => (float)$order->getShippingAmount()		
 			);
 			array_push($orderitem,$shipcharge);
 			$housesql="select house_number from sales_order_address where entity_id = (select shipping_address_id from sales_order where entity_id =".$order->getId().")";

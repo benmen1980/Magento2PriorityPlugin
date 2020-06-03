@@ -16,9 +16,9 @@ class Order extends \Magento\Backend\App\Action
 	
 	protected $_transaction;
 	
-	protected $_customerFactory;
+	protected $customerFactory;
 	
-    protected $_addressFactory;
+    protected $addressFactory;
 	
     public function __construct(
         \Magento\Backend\App\Action\Context $context,
@@ -32,7 +32,9 @@ class Order extends \Magento\Backend\App\Action
 		\Magento\Framework\Translate\Inline\StateInterface $inlineTranslation,
 		\Magento\Framework\Escaper $escaper,
 		\Wyomind\AdvancedInventory\Model\StockRepository $stockRepository,
-		\Magento\Framework\Stdlib\DateTime\TimezoneInterface $timezoneInterface
+		\Magento\Framework\Stdlib\DateTime\TimezoneInterface $timezoneInterface,
+		\Magento\Customer\Model\CustomerFactory $customerFactory,
+        \Magento\Customer\Model\AddressFactory $addressFactory
     ) {
         parent::__construct($context);
 		$this->scopeConfig = $scopeConfig;
@@ -46,6 +48,8 @@ class Order extends \Magento\Backend\App\Action
 		$this->_escaper = $escaper;
 		$this->_stockrepository = $stockRepository;
 		$this->_timezoneInterface = $timezoneInterface;
+		$this->_customerFactory = $customerFactory;
+        $this->_addressFactory = $addressFactory;
     }
     public function execute()
     {
@@ -175,7 +179,7 @@ class Order extends \Magento\Backend\App\Action
 					$shipcharge = array(
 							"PARTNAME" => $ship,
 							"TQUANT" => 1,
-							"VPRICE" => floatval($order->getShippingAmount())		
+							"VPRICE" => (float)$order->getShippingAmount()	
 					);
 					array_push($orderitem,$shipcharge);
 					$housesql="select house_number,apartment from sales_order_address where entity_id = (select shipping_address_id from sales_order where entity_id =".$order->getId().")";
@@ -253,7 +257,7 @@ class Order extends \Magento\Backend\App\Action
 						"PNCO_REMARKS" => $service_order_comment,
 						"ROYY_BUZZERFDT" => $timestart,
 						"ROYY_BUZZERTDT" => $timeend,
-						"ROYY_PACKAGEVALUE" => (float)$shipresult[0]['weight'],
+						"ROYY_PACKAGEVALUE" => (float)$shipresult[0]['shipping_package_value'],
 						"ROYY_PACKAGES" => $shipping_package_size_list,
 						"PNCO_NUMOFPACKS" => (int)$total_shipping_packages,
 						"STCODE"   => $stcode,
@@ -343,21 +347,23 @@ class Order extends \Magento\Backend\App\Action
 						$shippingstreet = implode(" ",$customerShippingStreet);
 					} else {
 						$shippingstreet = $customerShippingStreet[0];
-					}						
-					if($billingstreet == $shippingstreet){
+					}
+					$customer = $this->_customerFactory->create()->load($customerid);
+					$billingAddressId = $customer->getDefaultBilling();
+					if($billingstreet == $shippingstreet || $billingAddressId != $order->getBillingAddressId()){
 						$additional1 = "/CUSTOMERS";
 						$firstname = $order->getCustomerFirstName();
 						$lastname = $order->getCustomerLastName();
 						$middlename = $order->getCustomerMiddleName();
 						$email = $order->getCustomerEmail();
-						$customerStreet = $order->getShippingAddress()->getStreet(); 
+						$customerStreet = $order->getBillingAddress()->getStreet(); 
 						if(count($customerStreet) >= 1){
 							$street = implode(" ",$customerStreet);
 						} else {
 							$street = $customerStreet[0];
 						}				
-						$city = $order->getShippingAddress()->getCity();
-						$telephone = $order->getShippingAddress()->getTelephone();
+						$city = $order->getBillingAddress()->getCity();
+						$telephone = $order->getBillingAddress()->getTelephone();
 						if($middlename != ""){
 							$name = $firstname." ".$middlename." ".$lastname;
 						} else {

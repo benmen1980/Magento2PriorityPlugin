@@ -22,6 +22,10 @@ class PlaceOrder implements ObserverInterface
     protected $checkoutSession;
 	
 	protected $logger;
+	
+	protected $customerFactory;
+	
+    protected $addressFactory;
  
     public function __construct(
         \Magento\Sales\Model\OrderFactory $orderModel,
@@ -34,7 +38,9 @@ class PlaceOrder implements ObserverInterface
 		\Magento\Framework\Escaper $escaper,
 		\Psr\Log\LoggerInterface $logger,
 		\Wyomind\AdvancedInventory\Model\StockRepository $stockRepository,
-		\Magento\Framework\Stdlib\DateTime\TimezoneInterface $timezoneInterface
+		\Magento\Framework\Stdlib\DateTime\TimezoneInterface $timezoneInterface,
+		\Magento\Customer\Model\CustomerFactory $customerFactory,
+        \Magento\Customer\Model\AddressFactory $addressFactory
     )
     {
         $this->orderModel = $orderModel;
@@ -48,6 +54,8 @@ class PlaceOrder implements ObserverInterface
 		$this->_logger = $logger;
 		$this->_stockrepository = $stockRepository;
 		$this->_timezoneInterface = $timezoneInterface;
+		$this->_customerFactory = $customerFactory;
+        $this->_addressFactory = $addressFactory;
     }
  
     public function execute(\Magento\Framework\Event\Observer $observer)
@@ -245,7 +253,7 @@ class PlaceOrder implements ObserverInterface
 					"PNCO_REMARKS" => $service_order_comment,
 					"ROYY_BUZZERFDT" => $timestart,
 					"ROYY_BUZZERTDT" => $timeend,
-					"ROYY_PACKAGEVALUE" => (float)$shipresult[0]['weight'],
+					"ROYY_PACKAGEVALUE" => (float)$shipresult[0]['shipping_package_value'],
 					"ROYY_PACKAGES" => $shipping_package_size_list,
 					"PNCO_NUMOFPACKS" => (int)$total_shipping_packages,
 					"STCODE"   => $stcode,
@@ -344,20 +352,22 @@ class PlaceOrder implements ObserverInterface
 				} else {
 					$shippingstreet = $customerShippingStreet[0];
 				}						
-				if($billingstreet == $shippingstreet){
+				$customer = $this->_customerFactory->create()->load($customerid);
+				$billingAddressId = $customer->getDefaultBilling();
+				if($billingstreet == $shippingstreet || $billingAddressId != $order->getBillingAddressId()){
 					$additional1 = "/CUSTOMERS";
 					$firstname = $order->getCustomerFirstName();
 					$lastname = $order->getCustomerLastName();
 					$middlename = $order->getCustomerMiddleName();
 					$email = $order->getCustomerEmail();
-					$customerStreet = $order->getShippingAddress()->getStreet(); 
+					$customerStreet = $order->getBillingAddress()->getStreet(); 
 					if(count($customerStreet) >= 1){
 						$street = implode(" ",$customerStreet);
 					} else {
 						$street = $customerStreet[0];
 					}				
-					$city = $order->getShippingAddress()->getCity();
-					$telephone = $order->getShippingAddress()->getTelephone();
+					$city = $order->getBillingAddress()->getCity();
+					$telephone = $order->getBillingAddress()->getTelephone();
 					if($middlename != ""){
 						$name = $firstname." ".$middlename." ".$lastname;
 					} else {
