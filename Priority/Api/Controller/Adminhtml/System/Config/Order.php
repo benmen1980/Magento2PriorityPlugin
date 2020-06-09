@@ -120,7 +120,11 @@ class Order extends \Magento\Backend\App\Action
 					$status = $order->getState();
 					$warehouses = $this->_stockrepository->getAssignationByOrderId($order->getId());
 					$warehouse_data = json_decode($warehouses,true);
-					$place_id = $warehouse_data[0]['place_id'];
+					if($order->getStoreId() == 3){
+						$place_id = 4;
+					} else {
+						$place_id = $warehouse_data[0]['place_id'];
+					}
 					if($order->getCustomerId() == ""){
 						$customerid = $this->scopeConfig->getValue("general_settings/more_settings_config/walk_in_customer", $storeScope);
 					} else {
@@ -265,7 +269,7 @@ class Order extends \Magento\Backend\App\Action
 						"SHIPTO2_SUBFORM" => $shipdetails,
 						"PAYMENTDEF_SUBFORM" => $paymentarray,
 						"DETAILS"  => $order->getId(),
-						"BRANCHNAME" => $place_id
+						"BRANCHNAME" => (string)$place_id
 					);
 					$json_request = json_encode($params,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
 					$ch = curl_init($request_uri);
@@ -352,10 +356,10 @@ class Order extends \Magento\Backend\App\Action
 					$billingAddressId = $customer->getDefaultBilling();
 					if($billingstreet == $shippingstreet || $billingAddressId != $order->getBillingAddressId()){
 						$additional1 = "/CUSTOMERS";
-						$firstname = $order->getCustomerFirstName();
-						$lastname = $order->getCustomerLastName();
-						$middlename = $order->getCustomerMiddleName();
-						$email = $order->getCustomerEmail();
+						$firstname = $order->getBillingAddress()->getFirstName();
+						$lastname = $order->getBillingAddress()->getLastName();
+						$middlename = $order->getBillingAddress()->getMiddleName();
+						$email = $order->getBillingAddress()->getEmail();
 						$customerStreet = $order->getBillingAddress()->getStreet(); 
 						if(count($customerStreet) >= 1){
 							$street = implode(" ",$customerStreet);

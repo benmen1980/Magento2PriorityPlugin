@@ -8,9 +8,9 @@ class Custom {
 		$this->logger = $logger;
 	}
 	public function execute() {	
-		chmod("/var/www/paneco/releases/20200602223420/src/var/cache", 0777);
-		chmod("/var/www/paneco/releases/20200602223420/src/pub/static", 0777);
-		chmod("/var/www/paneco/releases/20200602223420/src/generated", 0777);
+		chmod("/var/www/paneco/releases/20200608072535/src/var/cache", 0777);
+		chmod("/var/www/paneco/releases/20200608072535/src/pub/static", 0777);
+		chmod("/var/www/paneco/releases/20200608072535/src/generated", 0777);
 		$this->logger->info('Cron Works');
 	}
 }

@@ -69,7 +69,11 @@ class Repost extends \Magento\Backend\App\Action
 			$appKey = $this->scopeConfig->getValue("settings/general/app_key",$storeScope);
 			$warehouses = $this->_stockrepository->getAssignationByOrderId($order->getId());
 			$warehouse_data = json_decode($warehouses,true);
-			$place_id = $warehouse_data[0]['place_id'];
+			if($order->getStoreId() == 3){
+				$place_id = 4;
+			} else {
+				$place_id = $warehouse_data[0]['place_id'];
+			}
 			$shipping = $order->getShippingMethod();
 			$shipping = explode("_",$shipping);
 			$shippigCode = $shipping[0];
@@ -238,7 +242,7 @@ class Repost extends \Magento\Backend\App\Action
 				"PNCO_REMARKS" => $service_order_comment,
 				"ROYY_BUZZERFDT" => $timestart,
 				"ROYY_BUZZERTDT" => $timeend,
-				"ROYY_PACKAGEVALUE" => (float)$shipresult[0]['weight'],
+				"ROYY_PACKAGEVALUE" => (float)$shipresult[0]['shipping_package_value'],
 				"ROYY_PACKAGES" => $shipping_package_size_list,
 				"PNCO_NUMOFPACKS" => (int)$total_shipping_packages,
 				"STCODE"   => $stcode,
@@ -246,7 +250,7 @@ class Repost extends \Magento\Backend\App\Action
 				"SHIPTO2_SUBFORM" => $shipdetails,
 				"PAYMENTDEF_SUBFORM" => $paymentarray,
 				"DETAILS"  => $order->getId(),
-				"BRANCHNAME" => $place_id
+				"BRANCHNAME" => (string)$place_id
 			);
 			$json_request = json_encode($params,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
 			$request_uri = "https://".$url."/odata/Priority/".$application.",".$language."/".$enviroment.$additional;
