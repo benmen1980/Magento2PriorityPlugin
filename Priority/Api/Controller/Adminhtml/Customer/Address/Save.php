@@ -53,7 +53,10 @@ class Save extends \Magento\Customer\Controller\Adminhtml\Address\Save
 		$enviroment = $this->_scopeConfig->getValue("settings/general/environment_name", $storeScope); 
 		$url = $this->_scopeConfig->getValue("settings/general/url", $storeScope);
 		$ssl_verify = $this->_scopeConfig->getValue("settings/general/ssl_verify", $storeScope);
-		$headers = array('Content-Type: application/json');
+		$appId = $this->_scopeConfig->getValue("settings/general/app_id",$storeScope);
+		$appKey = $this->_scopeConfig->getValue("settings/general/app_key",$storeScope);
+		$headers = array('Content-Type: application/json',"X-App-Id:".$appId,
+				"X-App-Key:".$appKey);
 		if($ssl_verify == 1){
 			$ssl = 'TRUE';
 		} else {

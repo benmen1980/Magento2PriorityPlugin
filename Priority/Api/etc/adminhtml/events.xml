@@ -1,9 +1,12 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
     <event name="adminhtml_customer_save_after">
-        <observer name="priority_customer_create" instance="Priority\Api\Observer\CustomerAdminCreate"/>
+        <observer name="priority_customer_create_admin" instance="Priority\Api\Observer\CustomerAdminCreate"/>
     </event>
 	<event name="sales_order_save_after">
         <observer name="priority_placeorder_admin" instance="Priority\Api\Observer\PlaceOrderAdmin"/>
+    </event>
+	 <event name="admin_system_config_changed_section_general_settings">
+        <observer name="custom_admin_system_config_changed_section_general_settings" instance="Priority\Api\Observer\ConfigChange"/>
     </event>
 </config>

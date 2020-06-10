@@ -31,26 +31,56 @@ class CronConfig extends \Magento\Framework\App\Config\Value
     public function afterSave()
     {
 		
-        $timeItem = $this->getData('groups/configurable_cron_syncitem/fields/itemtime/value');
+        // $timeItem = $this->getData('groups/configurable_cron_syncitem/fields/itemtime/value');
+        // $frequencyItem = $this->getData('groups/configurable_cron_syncitem/fields/itemfrequency/value');
+		// if($timeItem[1] == '00' || $timeItem[1] == '01'){
+			// $minutes = "*";
+		// } else {
+			// $minutes = "*/".intval($timeItem[1]);
+		// }
+		// if($timeItem[0] == '00'){
+			// $hours = "*";
+		// } else {
+			// $hours = intval($timeItem[0]);
+		// }
+        // $cronExprItem = [
+            // $minutes, //Minutes
+            // $hours, //hour
+            // $frequencyItem == \Magento\Cron\Model\Config\Source\Frequency::CRON_MONTHLY ? '1' : '*',
+            // '*', //Month of the Year
+            // $frequencyItem == \Magento\Cron\Model\Config\Source\Frequency::CRON_WEEKLY ? '1' : '*', //Day of the Week
+        // ];
+        // $cronExprString = join(' ', $cronExprItem);
+		
+		$timeItem = $this->getData('groups/configurable_cron_syncitem/fields/itemtime/value');
         $frequencyItem = $this->getData('groups/configurable_cron_syncitem/fields/itemfrequency/value');
-		if($timeItem[1] == '00' || $timeItem[1] == '01'){
-			$minutes = "*";
-		} else {
-			$minutes = "*/".intval($timeItem[1]);
+        
+		if($frequencyItem == 'M')
+		{
+			if($timeItem!="0")
+			{
+				$minutes="*/".$timeItem." * * * *";
+			}
+			else
+			{
+				$minutes="* * * * *";
+			}
+			
+			$cronExprString=$minutes;
 		}
-		if($timeItem[0] == '00'){
-			$hours = "*";
-		} else {
-			$hours = intval($timeItem[0]);
+
+		if($frequencyItem == 'H')
+		{
+			if($timeItem!="0")
+			{
+				$hours="0 */".$timeItem." * * * *";
+			}
+			else
+			{
+				$hours="0 * * * *";
+			}
+			$cronExprString=$hours;
 		}
-        $cronExprItem = [
-            $minutes, //Minutes
-            $hours, //hour
-            $frequencyItem == \Magento\Cron\Model\Config\Source\Frequency::CRON_MONTHLY ? '1' : '*',
-            '*', //Month of the Year
-            $frequencyItem == \Magento\Cron\Model\Config\Source\Frequency::CRON_WEEKLY ? '1' : '*', //Day of the Week
-        ];
-        $cronExprString = join(' ', $cronExprItem);
 
         try {
             $this->_configValueFactory->create()->load(

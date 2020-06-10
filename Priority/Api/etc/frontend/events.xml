@@ -1,9 +1,12 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
     <event name="customer_register_success">
-        <observer name="priority_customer_create_admin" instance="Priority\Api\Observer\CustomerAdminCreate"/>
+        <observer name="priority_customer_create" instance="Priority\Api\Observer\CustomerCreate"/>
     </event>
 	<event name="checkout_onepage_controller_success_action">
         <observer name="priority_api_place_order" instance="Priority\Api\Observer\PlaceOrder" />
     </event>
+	<event name="customer_address_save_after">
+		<observer name="priority_api_customer_address_after_save" instance="Priority\Api\Observer\CustomerAddressUpdate" />
+	</event>
 </config>

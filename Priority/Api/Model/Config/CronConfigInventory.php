@@ -31,28 +31,58 @@ class CronConfigInventory extends \Magento\Framework\App\Config\Value
     public function afterSave()
     {
 		
+		// $timeInventory = $this->getData('groups/configurable_cron_syncinventory/fields/inventorytime/value');
+        // $frequencyInventory = $this->getData('groups/configurable_cron_syncinventory/fields/inventoryfrequency/value');
+		 // $frequencyItem = $this->getData('groups/configurable_cron_syncitem/fields/itemfrequency/value');
+		// if($timeInventory[1] == '00' || $timeInventory[1] == '01'){
+			// $minutes = "*";
+		// } else {
+			// $minutes = "*/".intval($timeInventory[1]);
+		// }
+		// if($timeInventory[0] == '00'){
+			// $hours = "*";
+		// } else {
+			// $hours = intval($timeInventory[0]); 
+		// }
+        // $cronExprInventory = [
+            // $minutes, 
+            // $hours, 
+            // $frequencyInventory == \Magento\Cron\Model\Config\Source\Frequency::CRON_MONTHLY ? '1' : '*',
+            // '*', //Month of the Year
+            // $frequencyInventory == \Magento\Cron\Model\Config\Source\Frequency::CRON_WEEKLY ? '1' : '*', //Day of the Week
+        // ];
+
+        // $cronExprStringInventory = join(' ', $cronExprInventory);
+		
 		$timeInventory = $this->getData('groups/configurable_cron_syncinventory/fields/inventorytime/value');
         $frequencyInventory = $this->getData('groups/configurable_cron_syncinventory/fields/inventoryfrequency/value');
-		 $frequencyItem = $this->getData('groups/configurable_cron_syncitem/fields/itemfrequency/value');
-		if($timeInventory[1] == '00' || $timeInventory[1] == '01'){
-			$minutes = "*";
-		} else {
-			$minutes = "*/".intval($timeInventory[1]);
+        
+		if($frequencyInventory == 'M')
+		{
+			if($timeInventory!="0")
+			{
+				$minutes="*/".$timeInventory." * * * *";
+			}
+			else
+			{
+				$minutes="* * * * *";
+			}
+			
+			$cronExprStringInventory=$minutes;
 		}
-		if($timeInventory[0] == '00'){
-			$hours = "*";
-		} else {
-			$hours = intval($timeInventory[0]); 
-		}
-        $cronExprInventory = [
-            $minutes, 
-            $hours, 
-            $frequencyInventory == \Magento\Cron\Model\Config\Source\Frequency::CRON_MONTHLY ? '1' : '*',
-            '*', //Month of the Year
-            $frequencyInventory == \Magento\Cron\Model\Config\Source\Frequency::CRON_WEEKLY ? '1' : '*', //Day of the Week
-        ];
 
-        $cronExprStringInventory = join(' ', $cronExprInventory);
+		if($frequencyInventory == 'H')
+		{
+			if($timeInventory!="0")
+			{
+				$hours="0 */".$timeInventory." * * * *";
+			}
+			else
+			{
+				$hours="0 * * * *";
+			}
+			$cronExprStringInventory=$hours;
+		}
 
         try {
             $this->_configValueFactory->create()->load(

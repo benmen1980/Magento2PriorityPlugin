@@ -69,8 +69,15 @@ class InstallSchema implements InstallSchemaInterface
             null,
             [],
             'Transaction Date'
+        )->addColumn(
+            'order_increment_id',
+            \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+            '50',
+            ['nullable' => false],
+            'Order Increment Id'
         );
         $installer->getConnection()->createTable($table);
+		
         $installer->endSetup();
     }
 }

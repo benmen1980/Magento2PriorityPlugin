@@ -12,7 +12,7 @@
             <argument name="resourceModel" xsi:type="string">Priority\Api\Model\ResourceModel\Transactions</argument>
         </arguments>
     </virtualType>
-	<preference for="Magento\Framework\View\TemplateEngine\Xhtml\Template" type="Priority\Api\View\TemplateEngine\Xhtml\Template"></preference>
+	<preference for="Magento\Framework\View\TemplateEngine\Xhtml\Template" type="Priority\Api\Magento\Framework\View\TemplateEngine\Xhtml\Template"></preference>
 
     <!-- <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
         <plugin name="sales_order_additional_columns" type="Priority\Api\Plugin\SalesOrderApiColumn" sortOrder="10" disabled="false" />

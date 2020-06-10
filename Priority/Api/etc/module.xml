@@ -1,4 +1,21 @@
 <?xml version="1.0"?>
     <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../lib/internal/Magento/Framework/Module/etc/module.xsd">
-    <module name="Priority_Api" setup_version="1.0.1" />
+    <module name="Priority_Api" setup_version="1.0.1">
+		<sequence>
+			<module name="Magento_OfflineShipping"/>
+			<module name="Temando_Shipping"/>
+			<module name="Magento_Ups"/>
+			<module name="Magento_Usps"/>
+			<module name="Magento_Dhl"/>
+			<module name="Magento_Fedex"/>
+			<module name="Magento_OfflinePayments"/>
+			<module name="Klarna_Kp"/>
+			<module name="Amazon_Core"/>
+			<module name="SR_Creditguard"/>
+			<module name="Magento_Authorizenet"/>
+			<module name="Magento_AuthorizenetAcceptjs"/>
+			<module name="Magento_Paypal"/>
+			<module name="Magento_Braintree"/>
+        </sequence>
+	</module>
 </config>

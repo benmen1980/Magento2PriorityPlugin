@@ -62,7 +62,8 @@ class Testunit extends \Magento\Backend\App\Action
 		$language = $this->_scopeConfig->getValue("settings/general/language", $storeScope);
 		$url = $this->_scopeConfig->getValue("settings/general/url", $storeScope);
 		$ssl_verify = $this->_scopeConfig->getValue("settings/general/ssl_verify", $storeScope);
-		
+		$appId = $this->_scopeConfig->getValue("settings/general/app_id",$storeScope);
+		$appKey = $this->_scopeConfig->getValue("settings/general/app_key",$storeScope);
 		if($ssl_verify == 1){
 			$ssl = 'TRUE';
 		} else {
@@ -92,7 +93,10 @@ class Testunit extends \Magento\Backend\App\Action
 		$request_uri = "https://".$url."/odata/Priority/".$application.",".$language."/".$enviroment.$additional;
 		$curl = curl_init($request_uri);
 		curl_setopt($curl, CURLOPT_URL, $request_uri);
-		curl_setopt($curl, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+		curl_setopt($curl, CURLOPT_HTTPHEADER, array(
+			'Content-Type: application/json',
+			'X-App-Id:'.$appId,
+			'X-App-Key:'.$appKey));
 		curl_setopt($curl, CURLOPT_HEADER, 0);
 		curl_setopt($curl, CURLOPT_USERPWD, $username . ":" . $password);
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
@@ -110,10 +114,13 @@ class Testunit extends \Magento\Backend\App\Action
 		{
 			$status = "Success";
 			$json_pretty = json_encode(json_decode($response), JSON_PRETTY_PRINT);
+			
 		} else {
 			$status = "Failed";
-			$json_pretty = $response;
-			$name = $this->_scopeConfig->getValue("trans_email/ident_general/name", $storeScope);  
+			//	$json_pretty = $response;
+			$json_pretty=json_encode(json_decode($response),JSON_PRETTY_PRINT);// To print response errors like 401,404,503 etc
+			
+			/*$name = $this->_scopeConfig->getValue("trans_email/ident_general/name", $storeScope);  
 			$email = $this->_scopeConfig->getValue("trans_email/ident_general/email", $storeScope);  
 			$recipient = $this->_scopeConfig->getValue("general_settings/more_settings_config/mailing_list", $storeScope); 
 			$recipients = explode(",",$recipient);
@@ -133,7 +140,7 @@ class Testunit extends \Magento\Backend\App\Action
 								->getTransport();
 				$transport->sendMessage();
 				$this->inlineTranslation->resume();
-			}
+			}*/
 		}	
 		$resultJson->setData($response);
 		$json_request = json_encode(json_decode($json_request), JSON_PRETTY_PRINT);

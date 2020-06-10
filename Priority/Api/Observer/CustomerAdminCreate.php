@@ -43,7 +43,9 @@ class CustomerAdminCreate implements ObserverInterface
 		$enviroment = $this->scopeConfig->getValue("settings/general/environment_name", $storeScope); 
 		$url = $this->scopeConfig->getValue("settings/general/url", $storeScope);
 		$ssl_verify = $this->scopeConfig->getValue("settings/general/ssl_verify", $storeScope);
-		$language = $this->_scopeConfig->getValue("settings/general/language", $storeScope);
+		$language = $this->scopeConfig->getValue("settings/general/language", $storeScope);
+		$appId = $this->scopeConfig->getValue("settings/general/app_id",$storeScope);
+		$appKey = $this->scopeConfig->getValue("settings/general/app_key",$storeScope);
 		$headers = array('Content-Type: application/json');
 		if($ssl_verify == 1){
 			$ssl = 'TRUE';
@@ -72,7 +74,11 @@ class CustomerAdminCreate implements ObserverInterface
 		$json_request = json_encode($params);
 		$request_uri = "https://".$url."/odata/Priority/".$application.",".$language."/".$enviroment.$additional;
 		$ch = curl_init($request_uri);
-		curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+			'Content-Type: application/json',
+			'X-App-Id:'.$appId,
+			'X-App-Key:'.$appKey 
+		));
 		curl_setopt($ch, CURLOPT_HEADER, 0);
 		curl_setopt($ch, CURLOPT_USERPWD, $username . ":" . $password);
 		curl_setopt($ch, CURLOPT_TIMEOUT, 30);
