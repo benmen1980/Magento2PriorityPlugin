@@ -57,7 +57,7 @@ class Order extends \Magento\Backend\App\Action
 		$cronset = $this->scopeConfig->getValue("general_settings/configurable_cron_syncorder/ordertime", $storeScope);
 		if($cronset != "0"){
 			$orders = $this->_orderModel->getCollection();
-			//$orders->addFieldToFilter('state', 'new');
+			$orders->addFieldToFilter('status', 'processing');
 			$to = date("Y-m-d h:i:s"); 
 			$from = strtotime('-2 day', strtotime($to));
 			$from = date('Y-m-d h:i:s', $from); 
