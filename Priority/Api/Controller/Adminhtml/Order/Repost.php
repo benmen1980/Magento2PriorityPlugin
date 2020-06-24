@@ -72,7 +72,11 @@ class Repost extends \Magento\Backend\App\Action
 			if($order->getStoreId() == 3){
 				$place_id = 4;
 			} else {
-				$place_id = $warehouse_data[0]['place_id'];
+				if(!empty($warehouse_data)){
+					$place_id = $warehouse_data[0]['place_id'];
+				} else {
+					$place_id = "";
+				}
 			}
 			$shipping = $order->getShippingMethod();
 			$shipping = explode("_",$shipping);
@@ -95,7 +99,7 @@ class Repost extends \Magento\Backend\App\Action
 					"BIC" => $order->getPayment()->getCcType()
 				);
 			} else {
-				$paymentarray = array("PAYMENTCODE" => $paymentcode);
+				$paymentarray = array("PAYMENTCODE" => $paymentcode,"QPRICE" => (float)$order->getGrandTotal());
 			}
 			$orderid = $order->getIncrementId();
 			if($order->getCustomerId() == ""){
@@ -215,17 +219,30 @@ class Repost extends \Magento\Backend\App\Action
 			} else {
 				$timestart = "";
 				$timeend = "";
-			}										
-			$shipdetails = array(
-				"PNCO_FIRSTNAME" => $order->getShippingAddress()->getFirstName(),
-				"PNCO_LASTNAME" => $order->getShippingAddress()->getLastName(),
-				"PNCO_STREET" => $order->getShippingAddress()->getStreetLine(1),
-				"STATE" => $order->getShippingAddress()->getCity(),  
-				"ZIP" => $order->getShippingAddress()->getPostcode(),  
-				"PHONENUM" => $order->getShippingAddress()->getTelephone(),
-				"PNCO_HOUSENUM" => $house,	
-				"PNCO_APPT" => $apartment
-			);
+			}
+			if($order->getShippingMethod() == ""){
+				$shipdetails = array(
+					"PNCO_FIRSTNAME" => "",
+					"PNCO_LASTNAME" => "",
+					"PNCO_STREET" => "",
+					"STATE" => "",  
+					"ZIP" => "",  
+					"PHONENUM" => "",
+					"PNCO_HOUSENUM" => "",	
+					"PNCO_APPT" => ""
+				);
+			} else {
+				$shipdetails = array(
+					"PNCO_FIRSTNAME" => $order->getShippingAddress()->getFirstName(),
+					"PNCO_LASTNAME" => $order->getShippingAddress()->getLastName(),
+					"PNCO_STREET" => $order->getShippingAddress()->getStreetLine(1),
+					"STATE" => $order->getShippingAddress()->getCity(),  
+					"ZIP" => $order->getShippingAddress()->getPostcode(),  
+					"PHONENUM" => $order->getShippingAddress()->getTelephone(),
+					"PNCO_HOUSENUM" => $house,	
+					"PNCO_APPT" => $apartment
+				);
+			}
 			if($ssl_verify == 1){
 				$ssl = 'TRUE';
 			} else {

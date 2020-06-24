@@ -115,7 +115,7 @@ class Order extends \Magento\Backend\App\Action
 							"BIC" => $order->getPayment()->getCcType()
 						);
 					} else {
-						$paymentarray = array("PAYMENTCODE" => $paymentcode);
+						$paymentarray = array("PAYMENTCODE" => $paymentcode,"QPRICE" => (float)$order->getGrandTotal());
 					}
 					$status = $order->getState();
 					$warehouses = $this->_stockrepository->getAssignationByOrderId($order->getId());
@@ -123,7 +123,11 @@ class Order extends \Magento\Backend\App\Action
 					if($order->getStoreId() == 3){
 						$place_id = 4;
 					} else {
-						$place_id = $warehouse_data[0]['place_id'];
+						if(!empty($warehouse_data)){
+							$place_id = $warehouse_data[0]['place_id'];
+						} else {
+							$place_id = "";
+						}
 					}
 					if($order->getCustomerId() == ""){
 						$customerid = $this->scopeConfig->getValue("general_settings/more_settings_config/walk_in_customer", $storeScope);
@@ -365,7 +369,23 @@ class Order extends \Magento\Backend\App\Action
 							$street = implode(" ",$customerStreet);
 						} else {
 							$street = $customerStreet[0];
-						}				
+						}
+						if($order->getBillingAddress()->getHouseNumber() != "" ){
+							$houseno = ',מספר בית:'.$order->getBillingAddress()->getHouseNumber();
+						} else {
+							$houseno = "";
+						}
+						if($order->getBillingAddress()->getApartment() != ""){
+							$apartment = ',דירה:'.$order->getBillingAddress()->getApartment();
+						} else {
+							$apartment = "";
+						}
+						if($order->getBillingAddress()->getFloor() != ""){
+							$floor = ',קומה:'.$order->getBillingAddress()->getFloor();
+						} else {
+							$floor = $street;
+						}
+						$adddress = $street.$houseno.$apartment.$floor;
 						$city = $order->getBillingAddress()->getCity();
 						$telephone = $order->getBillingAddress()->getTelephone();
 						if($middlename != ""){
@@ -378,7 +398,7 @@ class Order extends \Magento\Backend\App\Action
 							"CUSTDES"  => $name,
 							"PHONE"    => $telephone,
 							"EMAIL"	   => $email,
-							"ADDRESS"  => $street,
+							"ADDRESS"  => $adddress,
 							"ADDRESS2" => "",
 							"STATEA"   => $city 
 						);

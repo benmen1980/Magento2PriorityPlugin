@@ -72,7 +72,7 @@ class PlaceOrderAdmin implements ObserverInterface {
 					"BIC" => $order->getPayment()->getCcType()
 				);
 			} else {
-				$paymentarray = array("PAYMENTCODE" => $paymentcode);
+				$paymentarray = array("PAYMENTCODE" => $paymentcode,"QPRICE" => (float)$order->getGrandTotal());
 			}
 			$customerid = $order->getCustomerId();
 			$orderid = $order->getIncrementId();
@@ -103,7 +103,11 @@ class PlaceOrderAdmin implements ObserverInterface {
 			if($order->getStoreId() == 3){
 				$place_id = 4;
 			} else {
-				$place_id = $warehouse_data[0]['place_id'];
+				if(!empty($warehouse_data)){
+					$place_id = $warehouse_data[0]['place_id'];
+				} else {
+					$place_id = "";
+				}
 			}
 			$giftsql="select sum(gift_amount) as total from amasty_amgiftcard_quote aaq where aaq.quote_id = (select so.quote_id from sales_order so where so.entity_id=".$order->getId().")";
 			$giftresult = $connection->fetchAll($giftsql);
@@ -345,7 +349,23 @@ class PlaceOrderAdmin implements ObserverInterface {
 					$street = implode(" ",$customerStreet);
 				} else {
 					$street = $customerStreet[0];
-				}				
+				}
+				if($order->getBillingAddress()->getHouseNumber() != "" ){
+					$houseno = ',מספר בית:'.$order->getBillingAddress()->getHouseNumber();
+				} else {
+					$houseno = "";
+				}
+				if($order->getBillingAddress()->getApartment() != ""){
+					$apartment = ',דירה:'.$order->getBillingAddress()->getApartment();
+				} else {
+					$apartment = "";
+				}
+				if($order->getBillingAddress()->getFloor() != ""){
+					$floor = ',קומה:'.$order->getBillingAddress()->getFloor();
+				} else {
+					$floor = $street;
+				}
+				$adddress = $street.$houseno.$apartment.$floor;				
 				$city = $order->getBillingAddress()->getCity();
 				$telephone = $order->getBillingAddress()->getTelephone();
 				if($middlename != ""){
@@ -358,7 +378,7 @@ class PlaceOrderAdmin implements ObserverInterface {
 					"CUSTDES"  => $name,
 					"PHONE"    => $telephone,
 					"EMAIL"	   => $email,
-					"ADDRESS"  => $street,
+					"ADDRESS"  => $adddress,
 					"ADDRESS2" => "",
 					"STATEA"   => $city 
 				);

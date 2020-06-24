@@ -77,7 +77,11 @@ class PlaceOrder implements ObserverInterface
 				if($order->getStoreId() == 3){
 					$place_id = 4;
 				} else {
-					$place_id = $warehouse_data[0]['place_id'];
+					if(!empty($warehouse_data)){
+						$place_id = $warehouse_data[0]['place_id'];
+					} else {
+						$place_id = "";
+					}
 				}
 				$shipping = $order->getShippingMethod();
 				$shipping = explode("_",$shipping);
@@ -100,7 +104,7 @@ class PlaceOrder implements ObserverInterface
 						"BIC" => $order->getPayment()->getCcType()
 					);
 				} else {
-					$paymentarray = array("PAYMENTCODE" => $paymentcode);
+					$paymentarray = array("PAYMENTCODE" => $paymentcode,"QPRICE" => (float)$order->getGrandTotal());
 				}
 				$orderid = $order->getIncrementId();
 				if($order->getCustomerId() == ""){
@@ -369,7 +373,23 @@ class PlaceOrder implements ObserverInterface
 						$street = implode(" ",$customerStreet);
 					} else {
 						$street = $customerStreet[0];
-					}				
+					}
+					if($order->getBillingAddress()->getHouseNumber() != "" ){
+						$houseno = ',מספר בית:'.$order->getBillingAddress()->getHouseNumber();
+					} else {
+						$houseno = "";
+					}
+					if($order->getBillingAddress()->getApartment() != ""){
+						$apartment = ',דירה:'.$order->getBillingAddress()->getApartment();
+					} else {
+						$apartment = "";
+					}
+					if($order->getBillingAddress()->getFloor() != ""){
+						$floor = ',קומה:'.$order->getBillingAddress()->getFloor();
+					} else {
+						$floor = $street;
+					}
+					$adddress = $street.$houseno.$apartment.$floor;					
 					$city = $order->getBillingAddress()->getCity();
 					$telephone = $order->getBillingAddress()->getTelephone();
 					if($middlename != ""){
@@ -382,7 +402,7 @@ class PlaceOrder implements ObserverInterface
 						"CUSTDES"  => $name,
 						"PHONE"    => $telephone,
 						"EMAIL"	   => $email,
-						"ADDRESS"  => $street,
+						"ADDRESS"  => $adddress,
 						"ADDRESS2" => "",
 						"STATEA"   => $city 
 					);
