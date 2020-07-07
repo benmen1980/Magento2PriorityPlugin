@@ -243,32 +243,58 @@ class Repost extends \Magento\Backend\App\Action
 					"PNCO_APPT" => $apartment
 				);
 			}
+			$custname = $order->getCustomerFirstName().' '.$order->getCustomerLastName();
 			if($ssl_verify == 1){
 				$ssl = 'TRUE';
 			} else {
 				$ssl = 'FALSE';
 			}	
 			$additional = "/ORDERS";
-			$params = array(
-				"CUSTNAME" => $customerid,
-				"CURDATE"  => date("Y-m-d"),
-				"BOOKNUM"  => $orderid,
-				"PNCO_WEBNUMBER" => $orderid,
-				"PNCO_UDATEUDATE" => $date,
-				"SHIPREMARK" => $shipping_order_comment,
-				"PNCO_REMARKS" => $service_order_comment,
-				"ROYY_BUZZERFDT" => $timestart,
-				"ROYY_BUZZERTDT" => $timeend,
-				"ROYY_PACKAGEVALUE" => (float)$shipresult[0]['shipping_package_value'],
-				"ROYY_PACKAGES" => $shipping_package_size_list,
-				"PNCO_NUMOFPACKS" => (int)$total_shipping_packages,
-				"STCODE"   => $stcode,
-				"ORDERITEMS_SUBFORM" => $orderitem,
-				"SHIPTO2_SUBFORM" => $shipdetails,
-				"PAYMENTDEF_SUBFORM" => $paymentarray,
-				"DETAILS"  => $order->getId(),
-				"BRANCHNAME" => (string)$place_id
-			);
+			if($order->getCustomerId() == ""){
+				$params = array(
+					"CUSTNAME" => $customerid,
+					"CDES" => $custname,
+					"CURDATE"  => date("Y-m-d"),
+					"BOOKNUM"  => $orderid,
+					"PNCO_WEBNUMBER" => $orderid,
+					"PNCO_UDATEUDATE" => $date,
+					"SHIPREMARK" => $shipping_order_comment,
+					"PNCO_REMARKS" => $service_order_comment,
+					"ROYY_BUZZERFDT" => $timestart,
+					"ROYY_BUZZERTDT" => $timeend,
+					"ROYY_PACKAGEVALUE" => (float)$shipresult[0]['shipping_package_value'],
+					"ROYY_PACKAGES" => $shipping_package_size_list,
+					"PNCO_NUMOFPACKS" => (int)$total_shipping_packages,
+					"STCODE"   => $stcode,
+					"ORDERITEMS_SUBFORM" => $orderitem,
+					"SHIPTO2_SUBFORM" => $shipdetails,
+					"PAYMENTDEF_SUBFORM" => $paymentarray,
+					"DETAILS"  => $order->getId(),
+					"BRANCHNAME" => (string)$place_id
+				);
+			} else {
+				$params = array(
+					"CUSTNAME" => $customerid,
+					"CURDATE"  => date("Y-m-d"),
+					"BOOKNUM"  => $orderid,
+					"PNCO_WEBNUMBER" => $orderid,
+					"PNCO_UDATEUDATE" => $date,
+					"SHIPREMARK" => $shipping_order_comment,
+					"PNCO_REMARKS" => $service_order_comment,
+					"ROYY_BUZZERFDT" => $timestart,
+					"ROYY_BUZZERTDT" => $timeend,
+					"ROYY_PACKAGEVALUE" => (float)$shipresult[0]['shipping_package_value'],
+					"ROYY_PACKAGES" => $shipping_package_size_list,
+					"PNCO_NUMOFPACKS" => (int)$total_shipping_packages,
+					"STCODE"   => $stcode,
+					"ORDERITEMS_SUBFORM" => $orderitem,
+					"SHIPTO2_SUBFORM" => $shipdetails,
+					"PAYMENTDEF_SUBFORM" => $paymentarray,
+					"DETAILS"  => $order->getId(),
+					"BRANCHNAME" => (string)$place_id
+				);
+			}
+					
 			$json_request = json_encode($params,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
 			$request_uri = "https://".$url."/odata/Priority/".$application.",".$language."/".$enviroment.$additional;
 			$ch = curl_init($request_uri);
