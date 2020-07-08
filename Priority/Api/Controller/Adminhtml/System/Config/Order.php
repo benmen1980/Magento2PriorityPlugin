@@ -55,13 +55,13 @@ class Order extends \Magento\Backend\App\Action
     {
 		$storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORES;
 		$cronset = $this->scopeConfig->getValue("general_settings/configurable_cron_syncorder/ordertime", $storeScope);
-		//if($cronset != "0"){
+		if($cronset != "0"){
 			$orders = $this->_orderModel->getCollection();
+			$prev_date = date('Y-m-d', strtotime('-5 days'));
+			$current_date = date('Y-m-d');
+			$orders->addAttributeToFilter('created_at', ['gteq'=>$prev_date.' 00:00:00']);
+			$orders->addAttributeToFilter('created_at', ['lteq'=>$current_date.' 23:59:59']);
 			$orders->addFieldToFilter('status', 'processing');
-			$to = date("Y-m-d h:i:s"); 
-			$from = strtotime('-5 day', strtotime($to));
-			$from = date('Y-m-d h:i:s', $from); 
-			$orders->addFieldToFilter('created_at', array('from'=>$from, 'to'=>$to));
 			$objectManager =  \Magento\Framework\App\ObjectManager::getInstance();
 			$connection = $objectManager->get('Magento\Framework\App\ResourceConnection')->getConnection('\Magento\Framework\App\ResourceConnection::DEFAULT_CONNECTION');
 			$objDate = $objectManager->create('Magento\Framework\Stdlib\DateTime\DateTime');	
@@ -472,6 +472,6 @@ class Order extends \Magento\Backend\App\Action
 					}
 				}
 			}
-		//}
+		}
 	}
 }
