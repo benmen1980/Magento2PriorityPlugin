@@ -43,13 +43,25 @@ class CustomerAddressUpdate implements ObserverInterface
 			$ssl = 'FALSE';
 		}	 
 		$additional = "/CUSTOMERS";
-		$firstname = $postData['firstname'];
-		$lastname = $postData['lastname'];
-		$middlename = $postData['middlename'];
 		$email = $customer->getEmail();
 		$street = $customerAddress->getStreetFull();				
 		$city = $customerAddress->getCity();
 		$telephone = $customerAddress->getTelephone();
+		if(isset($postData['firstname']) && $postData['firstname'] != ""){
+			$firstname = $postData['firstname'];
+		} else {
+			$firstname = $observer->getCustomerAddress()->getFirstName();
+		}
+		if(isset($postData['lastname']) && $postData['lastname'] != ""){
+			$lastname = $postData['lastname'];
+		} else {
+			$lastname = $observer->getCustomerAddress()->getLastName();
+		}
+		if(isset($postData['middlename']) && $postData['middlename'] != ""){
+			$middlename = $postData['middlename'];
+		} else {
+			$middlename = $observer->getCustomerAddress()->getMiddleName();
+		}
 		if($middlename != ""){
 			$name = $firstname." ".$middlename." ".$lastname;
 		} else {
