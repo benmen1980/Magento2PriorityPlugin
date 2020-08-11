@@ -67,7 +67,7 @@ class PlaceOrderAdmin implements ObserverInterface {
 					"PAYACCOUNT" => $order->getPayment()->getCcLast4(),
 					"VALIDMONTH" => $order->getPayment()->getCcExpMonth().$order->getPayment()->getCcExpYear(),
 					"QPRICE" => (float)$order->getGrandTotal(), 
-					"CCUID" => $order->getPayment()->getAdditionalInformation('last_trans_id'),
+					"CCUID" => $order->getPayment()->getAdditionalInformation('card_id'),
 					"CONFNUM" => $order->getCcTransId(),
 					"BIC" => $order->getPayment()->getCcType()
 				);
@@ -234,7 +234,7 @@ class PlaceOrderAdmin implements ObserverInterface {
 			$additional = "/ORDERS";
 			if($order->getCustomerId() == ""){
 				$params = array(
-					"CUSTNAME" => $customerid,
+					"CUSTNAMEPATNAME" => 'P1',
 					"CDES" => $custname,
 					"CURDATE"  => date("Y-m-d"),
 					"BOOKNUM"  => $orderid,
