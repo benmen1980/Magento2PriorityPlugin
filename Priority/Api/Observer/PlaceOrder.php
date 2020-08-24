@@ -254,7 +254,7 @@ class PlaceOrder implements ObserverInterface
 				$additional = "/ORDERS";
 				if($order->getCustomerId() == ""){
 					$params = array(
-						"CUSTNAMEPATNAME" => 'P1',
+						"CUSTNAME" => 'G'.$orderid,
 						"CDES" => $custname,
 						"CURDATE"  => date("Y-m-d"),
 						"BOOKNUM"  => $orderid,
@@ -473,6 +473,104 @@ class PlaceOrder implements ObserverInterface
 							"transaction_date" => $objDate->gmtDate()
 							]);
 						$saveData1 = $model1->save();	
+					} else {
+						$customerBillingStreet = $order->getBillingAddress()->getStreet(); 
+						if(count($customerBillingStreet) >= 1){
+							$billingstreet = implode(" ",$customerBillingStreet);
+						} else {
+							$billingstreet = $customerBillingStreet[0];
+						}	
+						$customerShippingStreet = $order->getShippingAddress()->getStreet(); 
+						if(count($customerShippingStreet) >= 1){
+							$shippingstreet = implode(" ",$customerShippingStreet);
+						} else {
+							$shippingstreet = $customerShippingStreet[0];
+						}
+						$customer = $this->_customerFactory->create()->load($customerid);
+						
+						$additional1 = "/CUSTOMERS";
+						$firstname = $order->getBillingAddress()->getFirstName();
+						$lastname = $order->getBillingAddress()->getLastName();
+						$middlename = $order->getBillingAddress()->getMiddleName();
+						$email = $order->getBillingAddress()->getEmail();
+						$customerStreet = $order->getBillingAddress()->getStreet(); 
+						if(count($customerStreet) >= 1){
+							$street = implode(" ",$customerStreet);
+						} else {
+							$street = $customerStreet[0];
+						}
+						if($order->getBillingAddress()->getHouseNumber() != "" ){
+							$houseno = ',מספר בית:'.$order->getBillingAddress()->getHouseNumber();
+						} else {
+							$houseno = "";
+						}
+						if($order->getBillingAddress()->getApartment() != ""){
+							$apartment = ',דירה:'.$order->getBillingAddress()->getApartment();
+						} else {
+							$apartment = "";
+						}
+						if($order->getBillingAddress()->getFloor() != ""){
+							$floor = ',קומה:'.$order->getBillingAddress()->getFloor();
+						} else {
+							$floor = $street;
+						}
+						$adddress = $street.$houseno.$apartment.$floor;
+						$city = $order->getBillingAddress()->getCity();
+						$telephone = $order->getBillingAddress()->getTelephone();
+						if($middlename != ""){
+							$name = $firstname." ".$middlename." ".$lastname;
+						} else {
+							$name = $firstname." ".$lastname;
+						}
+						$params1 = array(
+							"CUSTNAME" => 'G'.$orderid,
+							"CUSTDES"  => $name,
+							"PHONE"    => $telephone,
+							"EMAIL"	   => $email,
+							"ADDRESS"  => $adddress,
+							"ADDRESS2" => "",
+							"STATEA"   => $city 
+						);
+						$json_request1 = json_encode($params1,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+						$request_uri1 = "https://".$url."/odata/Priority/".$application.",".$language."/".$enviroment.$additional1;
+						$ch = curl_init($request_uri1);
+						curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+							'Content-Type: application/json',
+							'X-App-Id:'.$appId,
+							'X-App-Key:'.$appKey
+						));
+						
+						curl_setopt($ch, CURLOPT_HEADER, 0);
+						curl_setopt($ch, CURLOPT_USERPWD, $username . ":" . $password);
+						curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+						curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+						curl_setopt($ch, CURLOPT_POSTFIELDS, $json_request1);
+						curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+						curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $ssl);
+						$response1 = curl_exec($ch);
+						$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+						curl_close($ch);
+						
+						if($httpCode == '200' || $httpCode == '201')
+						{
+							$status1 = "Success";
+							$json_pretty1 = json_encode(json_decode($response1), JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+						} else {
+							$status1 = "Failed";
+							$json_pretty1 = $response1;
+						}
+						
+						$json_request1 = json_encode(json_decode($json_request1),JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+						$model1 = $this->_transactions->create();
+						$model1->addData([
+							"url" => $request_uri1,
+							"request_method" => 'POST',
+							"json_request" => $json_request1,
+							"json_response" => $json_pretty1,
+							"status" => $status1,
+							"transaction_date" => $objDate->gmtDate()
+							]);
+						$saveData1 = $model1->save();
 					}
 				}
 			}
