@@ -83,6 +83,8 @@ class Order extends \Magento\Backend\App\Action
 			}		
 			$additional = "/ORDERS";
 			$request_uri = "https://".$url."/odata/Priority/".$application.",".$language."/".$enviroment.$additional;
+			$schedulecronsql = "SELECT * FROM `cron_schedule` WHERE `job_code` LIKE '%priority_api_sync_order_cron%' AND `status` = 'pending' LIMIT 1"; 
+			$schedulecronresult = $connection->fetchAll($schedulecronsql);
 			$ordersyncsql = "select DISTINCT order_increment_id from test_unit_transactions where order_increment_id is not null"; 
 			$ordersyncresult = $connection->fetchAll($ordersyncsql);
 			$order_ids = array();
@@ -94,394 +96,211 @@ class Order extends \Magento\Backend\App\Action
 			foreach($orders as $order){
 				$orderid = $order->getIncrementId();
 				if(!in_array($orderid,$order_ids)){
-					$shipping = $order->getShippingMethod();
-					$shipping = explode("_",$shipping);
-					$shippigCode = $shipping[0];
-					$stcode = $this->scopeConfig->getValue("carriers/".$shippigCode."/priority_code",$storeScope);
-					$payment = $order->getPayment()->getMethod();
-					$paymentcode = $this->scopeConfig->getValue("payment/".$payment."/priority_code",$storeScope);
-					if($payment == "authorizenet_directpost" || $payment == "payflowpro" || $payment == "payflowpro_cc_vault" || $payment == "payflow_link" || $payment == "payflow_advanced" || $payment == "authorizenet_acceptjs" || $payment == "braintree" || $payment == "srcreditguard") {
-						$paydes = $order->getPayment()->getAdditionalInformation('installments_number_of_payments') + 1;
-						$paymentarray = array(
-							"PAYMENTCODE" => $paymentcode, 
-							"PAYMENTNAME" => $order->getPayment()->getAdditionalInformation('method_title'),
-							"IDNUM" => $order->getPayment()->getCcOwner(),
-							"PAYCODE" => (string)$paydes,
-							"PAYACCOUNT" => $order->getPayment()->getCcLast4(),
-							"VALIDMONTH" => $order->getPayment()->getCcExpMonth().$order->getPayment()->getCcExpYear(),
-							"QPRICE" => (float)$order->getGrandTotal(), 
-							"CCUID" => $order->getPayment()->getAdditionalInformation('card_id'),
-							"CONFNUM" => $order->getCcTransId(),
-							"BIC" => $order->getPayment()->getCcType()
-						);
-					} else {
-						$paymentarray = array("PAYMENTCODE" => $paymentcode,"QPRICE" => (float)$order->getGrandTotal());
-					}
-					$status = $order->getState();
-					$warehouses = $this->_stockrepository->getAssignationByOrderId($order->getId());
-					$warehouse_data = json_decode($warehouses,true);
-					if($order->getStoreId() == 3){
-						$place_id = 4;
-					} else {
-						if(!empty($warehouse_data)){
-							$place_id = $warehouse_data[0]['place_id'];
+					$date1 = $order->getCreatedAt();
+					$date2 = $schedulecronresult[0]['scheduled_at'];
+					$date1 = strtotime($date1);
+					$dm1 = date('i', $date1);
+					$date2 = strtotime($date2);
+					$dm2 = date('i', $date2);
+					if($dm1 != $dm2) {
+						$shipping = $order->getShippingMethod();
+						$shipping = explode("_",$shipping);
+						$shippigCode = $shipping[0];
+						$stcode = $this->scopeConfig->getValue("carriers/".$shippigCode."/priority_code",$storeScope);
+						$payment = $order->getPayment()->getMethod();
+						$paymentcode = $this->scopeConfig->getValue("payment/".$payment."/priority_code",$storeScope);
+						if($payment == "authorizenet_directpost" || $payment == "payflowpro" || $payment == "payflowpro_cc_vault" || $payment == "payflow_link" || $payment == "payflow_advanced" || $payment == "authorizenet_acceptjs" || $payment == "braintree" || $payment == "srcreditguard") {
+							$paydes = $order->getPayment()->getAdditionalInformation('installments_number_of_payments') + 1;
+							$paymentarray = array(
+								"PAYMENTCODE" => $paymentcode, 
+								"PAYMENTNAME" => $order->getPayment()->getAdditionalInformation('method_title'),
+								"IDNUM" => $order->getPayment()->getCcOwner(),
+								"PAYCODE" => (string)$paydes,
+								"PAYACCOUNT" => $order->getPayment()->getCcLast4(),
+								"VALIDMONTH" => $order->getPayment()->getCcExpMonth().$order->getPayment()->getCcExpYear(),
+								"QPRICE" => (float)$order->getGrandTotal(), 
+								"CCUID" => $order->getPayment()->getAdditionalInformation('card_id'),
+								"CONFNUM" => $order->getCcTransId(),
+								"BIC" => $order->getPayment()->getCcType()
+							);
 						} else {
-							$place_id = "";
+							$paymentarray = array("PAYMENTCODE" => $paymentcode,"QPRICE" => (float)$order->getGrandTotal());
 						}
-					}
-					if($order->getCustomerId() == ""){
-						$customerid = $this->scopeConfig->getValue("general_settings/more_settings_config/walk_in_customer", $storeScope);
-					} else {
-						$customerid = $order->getCustomerId();
-					}
-					$orderItems = $order->getAllItems();
-					$orderitem = array();
-					
-					foreach ($order->getAllItems() as $item) {	
-						$items['PARTNAME'] = $item->getSku();
-						$items['TQUANT'] = (int)$item->getQtyOrdered();
-						$items['VATPRICE'] = floatval($item->getRowTotal());
-						array_push($orderitem,$items);
-					}	
-					
-					$giftsql="select sum(gift_amount) as total from amasty_amgiftcard_quote aaq where aaq.quote_id = (select so.quote_id from sales_order so where so.entity_id=".$order->getId().")";
-					$giftresult = $connection->fetchAll($giftsql);
-					if(!empty($giftresult[0]['total'])){
-						$giftdsicount = array(
-							"PARTNAME" => "7001",
-							"TQUANT" => -1,
-							"VPRICE" => (float)$giftresult[0]['total']	
-						);
-						array_push($orderitem,$giftdsicount);
-					}
-					$scsql="select amstorecredit_amount from sales_order where entity_id=".$order->getId();
-					$scresult = $connection->fetchAll($scsql);
-					if(!empty($scresult[0]['amstorecredit_amount'])){
-						$scdsicount = array(
-							"PARTNAME" => "7003",
-							"TQUANT" => -1,
-							"VPRICE" => (float)$scresult[0]['amstorecredit_amount']	
-						);
-						array_push($orderitem,$scdsicount);
-					}
-					$rewardsql="select order_id, spend_points from mst_rewards_purchase where order_id=".$order->getId();
-					$rewardresult = $connection->fetchAll($rewardsql);
-					if(!empty($rewardresult[0]['spend_points'])){
-						$rpdsicount = array(
-							"PARTNAME" => "7017",
-							"TQUANT" => -1,
-							"VPRICE" => (float)$rewardresult[0]['spend_points']	
-						);
-						array_push($orderitem,$rpdsicount);
-					}
-					$dmsql="select discount_amount from sales_order so where so.entity_id =".$order->getId();
-					$dmresult = $connection->fetchAll($dmsql);
-					if($dmresult[0]['discount_amount'] != '0.0000'){
-						$dsicount = array(
-							"PARTNAME" => "7018",
-							"TQUANT" => -1,
-							"VPRICE" => abs((float)$dmresult[0]['discount_amount'])
-						);
-						array_push($orderitem,$dsicount);
-					}
-					$shipcharge = array(
-							"PARTNAME" => $ship,
-							"TQUANT" => 1,
-							"VPRICE" => (float)$order->getShippingAmount()	
-					);
-					array_push($orderitem,$shipcharge);
-					$housesql="select house_number,apartment from sales_order_address where entity_id = (select shipping_address_id from sales_order where entity_id =".$order->getId().")";
-					$houseresult = $connection->fetchAll($housesql);
-					if(!empty($houseresult)){
-						$house = $houseresult[0]['house_number'];
-						$apartment = $houseresult[0]['apartment'];
-					} else {
-						$house = "";
-						$apartment = "";
-					}
-					$shipsql="select * from sales_order where entity_id =".$order->getId();
-					$shipresult = $connection->fetchAll($shipsql);
-					if(!empty($shipresult[0]['shipping_order_comment'])){
-						$shipping_order_comment = $shipresult[0]['shipping_order_comment'];
-					} else {
-						$shipping_order_comment = "";
-					}
-					if(!empty($shipresult[0]['service_order_comment'])){
-						$service_order_comment = $shipresult[0]['service_order_comment'];
-					} else {
-						$service_order_comment = "";
-					}
-					if(!empty($shipresult[0]['shipping_package_size_list'])){
-						$shipping_package_size_list = $shipresult[0]['shipping_package_size_list'];
-					} else {
-						$shipping_package_size_list = "";
-					}
-					if(!empty($shipresult[0]['total_shipping_packages'])){
-						$total_shipping_packages = $shipresult[0]['total_shipping_packages'];
-					} else {
-						$total_shipping_packages = "";
-					}
-					$date = $this->_timezoneInterface
-                                        ->date(new \DateTime($order->getCreatedAt()))
-                                        ->format('c');
-					$timeslotsql="select additional_information from studioraz_buzzr_shipment where order_id =".$order->getId();
-					$timeslotresult = $connection->fetchAll($timeslotsql);
-					if(!empty($timeslotresult)){
-						$timeslot = json_decode($timeslotresult[0]['additional_information'],true);
-						if (isset($timeslot['timeslot_timestart'])){
-							$timeslotstartdate = $timeslot['timeslot_timestart'];
-							$timestart = date("d/m/Y_Hi", strtotime($timeslotstartdate));
+						$status = $order->getState();
+						$warehouses = $this->_stockrepository->getAssignationByOrderId($order->getId());
+						$warehouse_data = json_decode($warehouses,true);
+						if($order->getStoreId() == 3){
+							$place_id = 4;
 						} else {
-							$timestart = "";
+							if(!empty($warehouse_data)){
+								$place_id = $warehouse_data[0]['place_id'];
+							} else {
+								$place_id = "";
+							}
 						}
-						if (isset($timeslot['timeslot_timeend'])){
-							$timeslotenddate = $timeslot['timeslot_timeend'];
-							$timeend = date("d/m/Y_Hi", strtotime($timeslotenddate));
+						if($order->getCustomerId() == ""){
+							$customerid = $this->scopeConfig->getValue("general_settings/more_settings_config/walk_in_customer", $storeScope);
 						} else {
-							$timeend = "";
+							$customerid = $order->getCustomerId();
 						}
-					} else {
-						$timestart = "";
-						$timeend = "";
-					}				
-					
-					$shipdetails = array(
-						"PNCO_FIRSTNAME" => $order->getShippingAddress()->getFirstName(),
-						"PNCO_LASTNAME" => $order->getShippingAddress()->getLastName(),
-						"PNCO_STREET" => $order->getShippingAddress()->getStreetLine(1),
-						"STATE" => $order->getShippingAddress()->getCity(),  
-						"ZIP" => $order->getShippingAddress()->getPostcode(),  
-						"PHONENUM" => $order->getShippingAddress()->getTelephone(),
-						"PNCO_HOUSENUM" => $house,	
-						"PNCO_APPT" => $apartment
-					);
-					$custname = $order->getCustomerFirstName().' '.$order->getCustomerLastName();
-					if($order->getCustomerId() == ""){
-						$params = array(
-							"CUSTNAME" => 'G'.$orderid,
-							"CDES" => $custname,
-							"CURDATE"  => date("Y-m-d"),
-							"BOOKNUM"  => $orderid,
-							"PNCO_WEBNUMBER" => $orderid,
-							"PNCO_UDATEUDATE" => $date,
-							"SHIPREMARK" => $shipping_order_comment,
-							"PNCO_REMARKS" => $service_order_comment,
-							"ROYY_BUZZERFDT" => $timestart,
-							"ROYY_BUZZERTDT" => $timeend,
-							"ROYY_PACKAGEVALUE" => (float)$shipresult[0]['shipping_package_value'],
-							"ROYY_PACKAGES" => $shipping_package_size_list,
-							"PNCO_NUMOFPACKS" => (int)$total_shipping_packages,
-							"STCODE"   => $stcode,
-							"ORDERITEMS_SUBFORM" => $orderitem,
-							"SHIPTO2_SUBFORM" => $shipdetails,
-							"PAYMENTDEF_SUBFORM" => $paymentarray,
-							"DETAILS"  => $order->getId(),
-							"BRANCHNAME" => (string)$place_id
-						);
-						$customerBillingStreet = $order->getBillingAddress()->getStreet(); 
-						if(count($customerBillingStreet) >= 1){
-							$billingstreet = implode(" ",$customerBillingStreet);
-						} else {
-							$billingstreet = $customerBillingStreet[0];
-						}	
-						$customerShippingStreet = $order->getShippingAddress()->getStreet(); 
-						if(count($customerShippingStreet) >= 1){
-							$shippingstreet = implode(" ",$customerShippingStreet);
-						} else {
-							$shippingstreet = $customerShippingStreet[0];
-						}
-						$customer = $this->_customerFactory->create()->load($customerid);
+						$orderItems = $order->getAllItems();
+						$orderitem = array();
 						
-						$additional1 = "/CUSTOMERS";
-						$firstname = $order->getBillingAddress()->getFirstName();
-						$lastname = $order->getBillingAddress()->getLastName();
-						$middlename = $order->getBillingAddress()->getMiddleName();
-						$email = $order->getBillingAddress()->getEmail();
-						$customerStreet = $order->getBillingAddress()->getStreet(); 
-						if(count($customerStreet) >= 1){
-							$street = implode(" ",$customerStreet);
-						} else {
-							$street = $customerStreet[0];
+						foreach ($order->getAllItems() as $item) {	
+							$items['PARTNAME'] = $item->getSku();
+							$items['TQUANT'] = (int)$item->getQtyOrdered();
+							$items['VATPRICE'] = floatval($item->getRowTotal());
+							array_push($orderitem,$items);
+						}	
+						
+						$giftsql="select sum(gift_amount) as total from amasty_amgiftcard_quote aaq where aaq.quote_id = (select so.quote_id from sales_order so where so.entity_id=".$order->getId().")";
+						$giftresult = $connection->fetchAll($giftsql);
+						if(!empty($giftresult[0]['total'])){
+							$giftdsicount = array(
+								"PARTNAME" => "7001",
+								"TQUANT" => -1,
+								"VPRICE" => (float)$giftresult[0]['total']	
+							);
+							array_push($orderitem,$giftdsicount);
 						}
-						if($order->getBillingAddress()->getHouseNumber() != "" ){
-							$houseno = ',מספר בית:'.$order->getBillingAddress()->getHouseNumber();
-						} else {
-							$houseno = "";
+						$scsql="select amstorecredit_amount from sales_order where entity_id=".$order->getId();
+						$scresult = $connection->fetchAll($scsql);
+						if(!empty($scresult[0]['amstorecredit_amount'])){
+							$scdsicount = array(
+								"PARTNAME" => "7003",
+								"TQUANT" => -1,
+								"VPRICE" => (float)$scresult[0]['amstorecredit_amount']	
+							);
+							array_push($orderitem,$scdsicount);
 						}
-						if($order->getBillingAddress()->getApartment() != ""){
-							$apartment = ',דירה:'.$order->getBillingAddress()->getApartment();
+						$rewardsql="select order_id, spend_points from mst_rewards_purchase where order_id=".$order->getId();
+						$rewardresult = $connection->fetchAll($rewardsql);
+						if(!empty($rewardresult[0]['spend_points'])){
+							$rpdsicount = array(
+								"PARTNAME" => "7017",
+								"TQUANT" => -1,
+								"VPRICE" => (float)$rewardresult[0]['spend_points']	
+							);
+							array_push($orderitem,$rpdsicount);
+						}
+						$dmsql="select discount_amount from sales_order so where so.entity_id =".$order->getId();
+						$dmresult = $connection->fetchAll($dmsql);
+						if($dmresult[0]['discount_amount'] != '0.0000'){
+							$dsicount = array(
+								"PARTNAME" => "7018",
+								"TQUANT" => -1,
+								"VPRICE" => abs((float)$dmresult[0]['discount_amount'])
+							);
+							array_push($orderitem,$dsicount);
+						}
+						$shipcharge = array(
+								"PARTNAME" => $ship,
+								"TQUANT" => 1,
+								"VPRICE" => (float)$order->getShippingAmount()	
+						);
+						array_push($orderitem,$shipcharge);
+						$housesql="select house_number,apartment from sales_order_address where entity_id = (select shipping_address_id from sales_order where entity_id =".$order->getId().")";
+						$houseresult = $connection->fetchAll($housesql);
+						if(!empty($houseresult)){
+							$house = $houseresult[0]['house_number'];
+							$apartment = $houseresult[0]['apartment'];
 						} else {
+							$house = "";
 							$apartment = "";
 						}
-						if($order->getBillingAddress()->getFloor() != ""){
-							$floor = ',קומה:'.$order->getBillingAddress()->getFloor();
+						$shipsql="select * from sales_order where entity_id =".$order->getId();
+						$shipresult = $connection->fetchAll($shipsql);
+						if(!empty($shipresult[0]['shipping_order_comment'])){
+							$shipping_order_comment = $shipresult[0]['shipping_order_comment'];
 						} else {
-							$floor = $street;
+							$shipping_order_comment = "";
 						}
-						$adddress = $street.$houseno.$apartment.$floor;
-						$city = $order->getBillingAddress()->getCity();
-						$telephone = $order->getBillingAddress()->getTelephone();
-						if($middlename != ""){
-							$name = $firstname." ".$middlename." ".$lastname;
+						if(!empty($shipresult[0]['service_order_comment'])){
+							$service_order_comment = $shipresult[0]['service_order_comment'];
 						} else {
-							$name = $firstname." ".$lastname;
+							$service_order_comment = "";
 						}
-						$params1 = array(
-							"CUSTNAME" => 'G'.$orderid,
-							"CUSTDES"  => $name,
-							"PHONE"    => $telephone,
-							"EMAIL"	   => $email,
-							"ADDRESS"  => $adddress,
-							"ADDRESS2" => "",
-							"STATEA"   => $city 
+						if(!empty($shipresult[0]['shipping_package_size_list'])){
+							$shipping_package_size_list = $shipresult[0]['shipping_package_size_list'];
+						} else {
+							$shipping_package_size_list = "";
+						}
+						if(!empty($shipresult[0]['total_shipping_packages'])){
+							$total_shipping_packages = $shipresult[0]['total_shipping_packages'];
+						} else {
+							$total_shipping_packages = "";
+						}
+						$date = $this->_timezoneInterface
+											->date(new \DateTime($order->getCreatedAt()))
+											->format('c');
+						$timeslotsql="select additional_information from studioraz_buzzr_shipment where order_id =".$order->getId();
+						$timeslotresult = $connection->fetchAll($timeslotsql);
+						if(!empty($timeslotresult)){
+							$timeslot = json_decode($timeslotresult[0]['additional_information'],true);
+							if (isset($timeslot['timeslot_timestart'])){
+								$timeslotstartdate = $timeslot['timeslot_timestart'];
+								$timestart = date("d/m/Y_Hi", strtotime($timeslotstartdate));
+							} else {
+								$timestart = "";
+							}
+							if (isset($timeslot['timeslot_timeend'])){
+								$timeslotenddate = $timeslot['timeslot_timeend'];
+								$timeend = date("d/m/Y_Hi", strtotime($timeslotenddate));
+							} else {
+								$timeend = "";
+							}
+						} else {
+							$timestart = "";
+							$timeend = "";
+						}				
+						
+						$shipdetails = array(
+							"PNCO_FIRSTNAME" => $order->getShippingAddress()->getFirstName(),
+							"PNCO_LASTNAME" => $order->getShippingAddress()->getLastName(),
+							"PNCO_STREET" => $order->getShippingAddress()->getStreetLine(1),
+							"STATE" => $order->getShippingAddress()->getCity(),  
+							"ZIP" => $order->getShippingAddress()->getPostcode(),  
+							"PHONENUM" => $order->getShippingAddress()->getTelephone(),
+							"PNCO_HOUSENUM" => $house,	
+							"PNCO_APPT" => $apartment
 						);
-						$json_request1 = json_encode($params1,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
-						$request_uri1 = "https://".$url."/odata/Priority/".$application.",".$language."/".$enviroment.$additional1;
-						$ch = curl_init($request_uri1);
-						curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-							'Content-Type: application/json',
-							'X-App-Id:'.$appId,
-							'X-App-Key:'.$appKey
-						));
-						
-						curl_setopt($ch, CURLOPT_HEADER, 0);
-						curl_setopt($ch, CURLOPT_USERPWD, $username . ":" . $password);
-						curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-						curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
-						curl_setopt($ch, CURLOPT_POSTFIELDS, $json_request1);
-						curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-						curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $ssl);
-						$response1 = curl_exec($ch);
-						$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-						curl_close($ch);
-						
-						if($httpCode == '200' || $httpCode == '201')
-						{
-							$status1 = "Success";
-							$json_pretty1 = json_encode(json_decode($response1), JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-						} else {
-							$status1 = "Failed";
-							$json_pretty1 = $response1;
-						}
-						
-						$json_request1 = json_encode(json_decode($json_request1),JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-						$model1 = $this->_transactions->create();
-						$model1->addData([
-							"url" => $request_uri1,
-							"request_method" => 'POST',
-							"json_request" => $json_request1,
-							"json_response" => $json_pretty1,
-							"status" => $status1,
-							"transaction_date" => $objDate->gmtDate()
-							]);
-						$saveData1 = $model1->save();	
-					} else {
-						$params = array(
-							"CUSTNAME" => $customerid,
-							"CURDATE"  => date("Y-m-d"),
-							"BOOKNUM"  => $orderid,
-							"PNCO_WEBNUMBER" => $orderid,
-							"PNCO_UDATEUDATE" => $date,
-							"SHIPREMARK" => $shipping_order_comment,
-							"PNCO_REMARKS" => $service_order_comment,
-							"ROYY_BUZZERFDT" => $timestart,
-							"ROYY_BUZZERTDT" => $timeend,
-							"ROYY_PACKAGEVALUE" => (float)$shipresult[0]['shipping_package_value'],
-							"ROYY_PACKAGES" => $shipping_package_size_list,
-							"PNCO_NUMOFPACKS" => (int)$total_shipping_packages,
-							"STCODE"   => $stcode,
-							"ORDERITEMS_SUBFORM" => $orderitem,
-							"SHIPTO2_SUBFORM" => $shipdetails,
-							"PAYMENTDEF_SUBFORM" => $paymentarray,
-							"DETAILS"  => $order->getId(),
-							"BRANCHNAME" => (string)$place_id
-						);
-					}
-					
-					$json_request = json_encode($params,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
-					$ch = curl_init($request_uri);
-					curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json','X-App-Id:'.$appId,
-					'X-App-Key:'.$appKey));
-					curl_setopt($ch, CURLOPT_HEADER, 0);
-					curl_setopt($ch, CURLOPT_USERPWD, $username . ":" . $password);
-					curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-					curl_setopt($ch, CURLOPT_POST, 1);
-					curl_setopt($ch, CURLOPT_POSTFIELDS, $json_request);
-					curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-					curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $ssl);
-					$response = curl_exec($ch);
-					$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-					$contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
-					curl_close($ch);
-					if($httpCode == '200' || $httpCode == '201')
-					{
-						$status = "Success";
-						$json_pretty = json_encode(json_decode($response),  JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-					} else {
-						$status = "Failed";
-						if($contentType == "application/json; charset=utf-8"){
-							$json_pretty = json_encode(json_decode($response),  JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-						} else {
-							$json_pretty = $response;
-						}
-						$recipient = $this->scopeConfig->getValue("general_settings/more_settings_config/mailing_list", $storeScope); 
-						
-						if(!empty($recipient)){
-							$recipients = explode(",",$recipient);
-							$name = $this->scopeConfig->getValue("trans_email/ident_general/name", $storeScope);  
-							$email = $this->scopeConfig->getValue("trans_email/ident_general/email", $storeScope); 
-							foreach($recipients as $key => $to){
-								$templateOptions = array('area' => \Magento\Framework\App\Area::AREA_FRONTEND, 'store' => $this->storeManager->getStore()->getId());
-								$templateVars = array(
-									'store' => $this->storeManager->getStore()->getName(),
-									'order_id' => $orderid,
-									'error_code' => $httpCode,
-									'api_error'	=> $json_pretty
-								);
-								$from = array('email' => $this->_escaper->escapeHtml($email), 'name' => $this->_escaper->escapeHtml($name));
-								$this->inlineTranslation->suspend();
-								$transport = $this->_transportBuilder->setTemplateIdentifier('api_template')
-												->setTemplateOptions($templateOptions)
-												->setTemplateVars($templateVars)
-												->setFrom($from)
-												->addTo($to)
-												->getTransport();
-								$transport->sendMessage();
-								$this->inlineTranslation->resume();
-							} 
+						$custname = $order->getCustomerFirstName().' '.$order->getCustomerLastName();
+						if($order->getCustomerId() == ""){
+							$params = array(
+								"CUSTNAME" => 'G'.$orderid,
+								"CDES" => $custname,
+								"CURDATE"  => date("Y-m-d"),
+								"BOOKNUM"  => $orderid,
+								"PNCO_WEBNUMBER" => $orderid,
+								"PNCO_UDATEUDATE" => $date,
+								"SHIPREMARK" => $shipping_order_comment,
+								"PNCO_REMARKS" => $service_order_comment,
+								"ROYY_BUZZERFDT" => $timestart,
+								"ROYY_BUZZERTDT" => $timeend,
+								"ROYY_PACKAGEVALUE" => (float)$shipresult[0]['shipping_package_value'],
+								"ROYY_PACKAGES" => $shipping_package_size_list,
+								"PNCO_NUMOFPACKS" => (int)$total_shipping_packages,
+								"STCODE"   => $stcode,
+								"ORDERITEMS_SUBFORM" => $orderitem,
+								"SHIPTO2_SUBFORM" => $shipdetails,
+								"PAYMENTDEF_SUBFORM" => $paymentarray,
+								"DETAILS"  => $order->getId(),
+								"BRANCHNAME" => (string)$place_id
+							);
+							$customerBillingStreet = $order->getBillingAddress()->getStreet(); 
+							if(count($customerBillingStreet) >= 1){
+								$billingstreet = implode(" ",$customerBillingStreet);
+							} else {
+								$billingstreet = $customerBillingStreet[0];
+							}	
+							$customerShippingStreet = $order->getShippingAddress()->getStreet(); 
+							if(count($customerShippingStreet) >= 1){
+								$shippingstreet = implode(" ",$customerShippingStreet);
+							} else {
+								$shippingstreet = $customerShippingStreet[0];
+							}
+							$customer = $this->_customerFactory->create()->load($customerid);
 							
-						}	
-					}	
-					$json_request = json_encode(json_decode($json_request),  JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-					if($log == 1){
-						$model = $this->_transactions->create();
-						$model->addData([
-							"url" => $request_uri,
-							"request_method" => "POST",
-							"json_request" => $json_request,
-							"json_response" => $json_pretty,
-							"status" => $status,
-							"transaction_date" => $objDate->gmtDate(),
-							"order_increment_id" => $orderid
-							]);
-						$model->save();
-					}
-					if($order->getCustomerId() != ""){
-						$customerBillingStreet = $order->getBillingAddress()->getStreet(); 
-						if(count($customerBillingStreet) >= 1){
-							$billingstreet = implode(" ",$customerBillingStreet);
-						} else {
-							$billingstreet = $customerBillingStreet[0];
-						}	
-						$customerShippingStreet = $order->getShippingAddress()->getStreet(); 
-						if(count($customerShippingStreet) >= 1){
-							$shippingstreet = implode(" ",$customerShippingStreet);
-						} else {
-							$shippingstreet = $customerShippingStreet[0];
-						}
-						$customer = $this->_customerFactory->create()->load($customerid);
-						$billingAddressId = $customer->getDefaultBilling();
-						if($billingstreet == $shippingstreet || $billingAddressId != $order->getBillingAddressId()){
 							$additional1 = "/CUSTOMERS";
 							$firstname = $order->getBillingAddress()->getFirstName();
 							$lastname = $order->getBillingAddress()->getLastName();
@@ -517,7 +336,7 @@ class Order extends \Magento\Backend\App\Action
 								$name = $firstname." ".$lastname;
 							}
 							$params1 = array(
-								"CUSTNAME" => $customerid,
+								"CUSTNAME" => 'G'.$orderid,
 								"CUSTDES"  => $name,
 								"PHONE"    => $telephone,
 								"EMAIL"	   => $email,
@@ -537,7 +356,7 @@ class Order extends \Magento\Backend\App\Action
 							curl_setopt($ch, CURLOPT_HEADER, 0);
 							curl_setopt($ch, CURLOPT_USERPWD, $username . ":" . $password);
 							curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-							curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PATCH');
+							curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
 							curl_setopt($ch, CURLOPT_POSTFIELDS, $json_request1);
 							curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
 							curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $ssl);
@@ -558,15 +377,206 @@ class Order extends \Magento\Backend\App\Action
 							$model1 = $this->_transactions->create();
 							$model1->addData([
 								"url" => $request_uri1,
-								"request_method" => 'PATCH',
+								"request_method" => 'POST',
 								"json_request" => $json_request1,
 								"json_response" => $json_pretty1,
 								"status" => $status1,
 								"transaction_date" => $objDate->gmtDate()
 								]);
 							$saveData1 = $model1->save();	
+						} else {
+							$params = array(
+								"CUSTNAME" => $customerid,
+								"CURDATE"  => date("Y-m-d"),
+								"BOOKNUM"  => $orderid,
+								"PNCO_WEBNUMBER" => $orderid,
+								"PNCO_UDATEUDATE" => $date,
+								"SHIPREMARK" => $shipping_order_comment,
+								"PNCO_REMARKS" => $service_order_comment,
+								"ROYY_BUZZERFDT" => $timestart,
+								"ROYY_BUZZERTDT" => $timeend,
+								"ROYY_PACKAGEVALUE" => (float)$shipresult[0]['shipping_package_value'],
+								"ROYY_PACKAGES" => $shipping_package_size_list,
+								"PNCO_NUMOFPACKS" => (int)$total_shipping_packages,
+								"STCODE"   => $stcode,
+								"ORDERITEMS_SUBFORM" => $orderitem,
+								"SHIPTO2_SUBFORM" => $shipdetails,
+								"PAYMENTDEF_SUBFORM" => $paymentarray,
+								"DETAILS"  => $order->getId(),
+								"BRANCHNAME" => (string)$place_id
+							);
 						}
-					} 
+						
+						$json_request = json_encode($params,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+						$ch = curl_init($request_uri);
+						curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json','X-App-Id:'.$appId,
+						'X-App-Key:'.$appKey));
+						curl_setopt($ch, CURLOPT_HEADER, 0);
+						curl_setopt($ch, CURLOPT_USERPWD, $username . ":" . $password);
+						curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+						curl_setopt($ch, CURLOPT_POST, 1);
+						curl_setopt($ch, CURLOPT_POSTFIELDS, $json_request);
+						curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+						curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $ssl);
+						$response = curl_exec($ch);
+						$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+						$contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+						curl_close($ch);
+						if($httpCode == '200' || $httpCode == '201')
+						{
+							$status = "Success";
+							$json_pretty = json_encode(json_decode($response),  JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+						} else {
+							$status = "Failed";
+							if($contentType == "application/json; charset=utf-8"){
+								$json_pretty = json_encode(json_decode($response),  JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+							} else {
+								$json_pretty = $response;
+							}
+							$recipient = $this->scopeConfig->getValue("general_settings/more_settings_config/mailing_list", $storeScope); 
+							
+							if(!empty($recipient)){
+								$recipients = explode(",",$recipient);
+								$name = $this->scopeConfig->getValue("trans_email/ident_general/name", $storeScope);  
+								$email = $this->scopeConfig->getValue("trans_email/ident_general/email", $storeScope); 
+								foreach($recipients as $key => $to){
+									$templateOptions = array('area' => \Magento\Framework\App\Area::AREA_FRONTEND, 'store' => $this->storeManager->getStore()->getId());
+									$templateVars = array(
+										'store' => $this->storeManager->getStore()->getName(),
+										'order_id' => $orderid,
+										'error_code' => $httpCode,
+										'api_error'	=> $json_pretty
+									);
+									$from = array('email' => $this->_escaper->escapeHtml($email), 'name' => $this->_escaper->escapeHtml($name));
+									$this->inlineTranslation->suspend();
+									$transport = $this->_transportBuilder->setTemplateIdentifier('api_template')
+													->setTemplateOptions($templateOptions)
+													->setTemplateVars($templateVars)
+													->setFrom($from)
+													->addTo($to)
+													->getTransport();
+									$transport->sendMessage();
+									$this->inlineTranslation->resume();
+								} 
+								
+							}	
+						}	
+						$json_request = json_encode(json_decode($json_request),  JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+						if($log == 1){
+							$model = $this->_transactions->create();
+							$model->addData([
+								"url" => $request_uri,
+								"request_method" => "POST",
+								"json_request" => $json_request,
+								"json_response" => $json_pretty,
+								"status" => $status,
+								"transaction_date" => $objDate->gmtDate(),
+								"order_increment_id" => $orderid
+								]);
+							$model->save();
+						}
+						if($order->getCustomerId() != ""){
+							$customerBillingStreet = $order->getBillingAddress()->getStreet(); 
+							if(count($customerBillingStreet) >= 1){
+								$billingstreet = implode(" ",$customerBillingStreet);
+							} else {
+								$billingstreet = $customerBillingStreet[0];
+							}	
+							$customerShippingStreet = $order->getShippingAddress()->getStreet(); 
+							if(count($customerShippingStreet) >= 1){
+								$shippingstreet = implode(" ",$customerShippingStreet);
+							} else {
+								$shippingstreet = $customerShippingStreet[0];
+							}
+							$customer = $this->_customerFactory->create()->load($customerid);
+							$billingAddressId = $customer->getDefaultBilling();
+							if($billingstreet == $shippingstreet || $billingAddressId != $order->getBillingAddressId()){
+								$additional1 = "/CUSTOMERS";
+								$firstname = $order->getBillingAddress()->getFirstName();
+								$lastname = $order->getBillingAddress()->getLastName();
+								$middlename = $order->getBillingAddress()->getMiddleName();
+								$email = $order->getBillingAddress()->getEmail();
+								$customerStreet = $order->getBillingAddress()->getStreet(); 
+								if(count($customerStreet) >= 1){
+									$street = implode(" ",$customerStreet);
+								} else {
+									$street = $customerStreet[0];
+								}
+								if($order->getBillingAddress()->getHouseNumber() != "" ){
+									$houseno = ',מספר בית:'.$order->getBillingAddress()->getHouseNumber();
+								} else {
+									$houseno = "";
+								}
+								if($order->getBillingAddress()->getApartment() != ""){
+									$apartment = ',דירה:'.$order->getBillingAddress()->getApartment();
+								} else {
+									$apartment = "";
+								}
+								if($order->getBillingAddress()->getFloor() != ""){
+									$floor = ',קומה:'.$order->getBillingAddress()->getFloor();
+								} else {
+									$floor = $street;
+								}
+								$adddress = $street.$houseno.$apartment.$floor;
+								$city = $order->getBillingAddress()->getCity();
+								$telephone = $order->getBillingAddress()->getTelephone();
+								if($middlename != ""){
+									$name = $firstname." ".$middlename." ".$lastname;
+								} else {
+									$name = $firstname." ".$lastname;
+								}
+								$params1 = array(
+									"CUSTNAME" => $customerid,
+									"CUSTDES"  => $name,
+									"PHONE"    => $telephone,
+									"EMAIL"	   => $email,
+									"ADDRESS"  => $adddress,
+									"ADDRESS2" => "",
+									"STATEA"   => $city 
+								);
+								$json_request1 = json_encode($params1,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);
+								$request_uri1 = "https://".$url."/odata/Priority/".$application.",".$language."/".$enviroment.$additional1;
+								$ch = curl_init($request_uri1);
+								curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+									'Content-Type: application/json',
+									'X-App-Id:'.$appId,
+									'X-App-Key:'.$appKey
+								));
+								
+								curl_setopt($ch, CURLOPT_HEADER, 0);
+								curl_setopt($ch, CURLOPT_USERPWD, $username . ":" . $password);
+								curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+								curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PATCH');
+								curl_setopt($ch, CURLOPT_POSTFIELDS, $json_request1);
+								curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+								curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, $ssl);
+								$response1 = curl_exec($ch);
+								$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+								curl_close($ch);
+								
+								if($httpCode == '200' || $httpCode == '201')
+								{
+									$status1 = "Success";
+									$json_pretty1 = json_encode(json_decode($response1), JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+								} else {
+									$status1 = "Failed";
+									$json_pretty1 = $response1;
+								}
+								
+								$json_request1 = json_encode(json_decode($json_request1),JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+								$model1 = $this->_transactions->create();
+								$model1->addData([
+									"url" => $request_uri1,
+									"request_method" => 'PATCH',
+									"json_request" => $json_request1,
+									"json_response" => $json_pretty1,
+									"status" => $status1,
+									"transaction_date" => $objDate->gmtDate()
+									]);
+								$saveData1 = $model1->save();	
+							}
+						} 
+					}
 				}
 			}
 		}
