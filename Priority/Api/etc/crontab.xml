@@ -10,8 +10,5 @@
 		<job name="priority_api_sync_order_cron" instance="Priority\Api\Controller\Adminhtml\System\Config\Order" method="execute">
         	<config_path>crontab/default/jobs/priority_api_sync_order_cron/schedule/cron_expr</config_path>
         </job>
-		<job name="priority_api_custom_cronjob" instance="Priority\Api\Cron\Custom" method="execute">
-			<schedule>*/2 * * * *</schedule>
-		</job>
     </group>
 </config>
