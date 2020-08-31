@@ -190,6 +190,32 @@ class PlaceOrder implements ObserverInterface
 				} else {
 					$apartment = "";
 				}
+				
+				$ordergiftmsg=array();
+				$giftmsg="select gift_message from amasty_giftwrap_order_wrap where order_id =".$order->getId()." and gift_message <>''";
+				$giftmsgresult = $connection->fetchAll($giftmsg);
+				if(!empty($giftmsgresult[0]['gift_message'])){
+					$giftmsgarr = array(
+						"TEXT" => $giftmsgresult[0]['gift_message']
+					);
+					array_push($ordergiftmsg,$giftmsgarr);
+				}
+				else{
+					$giftmsgarr = array(
+						"TEXT" => ""
+					);
+					array_push($ordergiftmsg,$giftmsgarr);
+				}
+
+				$giftpackqry="select wrap_id,card_id,gift_message from amasty_giftwrap_order_wrap where order_id =".$order->getId();
+				$giftpackresult = $connection->fetchAll($giftpackqry);
+				if(!empty($giftpackresult[0]['wrap_id']) || !empty($giftpackresult[0]['card_id']) || !empty($giftpackresult[0]['gift_message'])){
+					$pncogiftpack="Y";
+				}
+				else{
+					$pncogiftpack="";
+				}		
+				
 				$shipsql="select * from sales_order where entity_id =".$order->getId();
 				$shipresult = $connection->fetchAll($shipsql);
 				if(!empty($shipresult[0]['shipping_order_comment'])){
@@ -268,11 +294,13 @@ class PlaceOrder implements ObserverInterface
 						"ROYY_PACKAGES" => $shipping_package_size_list,
 						"PNCO_NUMOFPACKS" => (int)$total_shipping_packages,
 						"STCODE"   => $stcode,
+						"PNCO_BLESSORDERSTEXT_SUBFORM"=>$ordergiftmsg,
 						"ORDERITEMS_SUBFORM" => $orderitem,
 						"SHIPTO2_SUBFORM" => $shipdetails,
 						"PAYMENTDEF_SUBFORM" => $paymentarray,
 						"DETAILS"  => $order->getId(),
-						"BRANCHNAME" => (string)$place_id
+						"BRANCHNAME" => (string)$place_id,
+						"PNCO_GIFTPACK"=>$pncogiftpack
 					);
 					$customerBillingStreet = $order->getBillingAddress()->getStreet(); 
 						if(count($customerBillingStreet) >= 1){
@@ -386,11 +414,13 @@ class PlaceOrder implements ObserverInterface
 						"ROYY_PACKAGES" => $shipping_package_size_list,
 						"PNCO_NUMOFPACKS" => (int)$total_shipping_packages,
 						"STCODE"   => $stcode,
+						"PNCO_BLESSORDERSTEXT_SUBFORM"=>$ordergiftmsg,
 						"ORDERITEMS_SUBFORM" => $orderitem,
 						"SHIPTO2_SUBFORM" => $shipdetails,
 						"PAYMENTDEF_SUBFORM" => $paymentarray,
 						"DETAILS"  => $order->getId(),
-						"BRANCHNAME" => (string)$place_id
+						"BRANCHNAME" => (string)$place_id,
+						"PNCO_GIFTPACK"=>$pncogiftpack
 					);
 				}
 			

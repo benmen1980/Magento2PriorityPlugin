@@ -83,6 +83,8 @@ class Order extends \Magento\Backend\App\Action
 			}		
 			$additional = "/ORDERS";
 			$request_uri = "https://".$url."/odata/Priority/".$application.",".$language."/".$enviroment.$additional;
+			$schedulecronsql = "SELECT * FROM `cron_schedule` WHERE `job_code` LIKE '%priority_api_sync_order_cron%' AND `status` = 'pending' LIMIT 1"; 
+			$schedulecronresult = $connection->fetchAll($schedulecronsql);
 			$ordersyncsql = "select DISTINCT order_increment_id from test_unit_transactions where order_increment_id is not null"; 
 			$ordersyncresult = $connection->fetchAll($ordersyncsql);
 			$order_ids = array();
@@ -94,6 +96,7 @@ class Order extends \Magento\Backend\App\Action
 			foreach($orders as $order){
 				$orderid = $order->getIncrementId();
 				if(!in_array($orderid,$order_ids)){
+					
 					$shipping = $order->getShippingMethod();
 					$shipping = explode("_",$shipping);
 					$shippigCode = $shipping[0];
@@ -199,6 +202,32 @@ class Order extends \Magento\Backend\App\Action
 						$house = "";
 						$apartment = "";
 					}
+					
+					$ordergiftmsg=array();
+					$giftmsg="select gift_message from amasty_giftwrap_order_wrap where order_id =".$order->getId()." and gift_message <>''";
+					$giftmsgresult = $connection->fetchAll($giftmsg);
+					if(!empty($giftmsgresult[0]['gift_message'])){
+						$giftmsgarr = array(
+							"TEXT" => $giftmsgresult[0]['gift_message']
+						);
+						array_push($ordergiftmsg,$giftmsgarr);
+					}
+					else{
+						$giftmsgarr = array(
+							"TEXT" => ""
+						);
+						array_push($ordergiftmsg,$giftmsgarr);
+					}
+					
+					$giftpackqry="select wrap_id,card_id,gift_message from amasty_giftwrap_order_wrap where order_id =".$order->getId();
+					$giftpackresult = $connection->fetchAll($giftpackqry);
+					if(!empty($giftpackresult[0]['wrap_id']) || !empty($giftpackresult[0]['card_id']) || !empty($giftpackresult[0]['gift_message'])){
+							$pncogiftpack="Y";
+						}
+					else{
+							$pncogiftpack="";
+						}
+					
 					$shipsql="select * from sales_order where entity_id =".$order->getId();
 					$shipresult = $connection->fetchAll($shipsql);
 					if(!empty($shipresult[0]['shipping_order_comment'])){
@@ -222,8 +251,8 @@ class Order extends \Magento\Backend\App\Action
 						$total_shipping_packages = "";
 					}
 					$date = $this->_timezoneInterface
-                                        ->date(new \DateTime($order->getCreatedAt()))
-                                        ->format('c');
+										->date(new \DateTime($order->getCreatedAt()))
+										->format('c');
 					$timeslotsql="select additional_information from studioraz_buzzr_shipment where order_id =".$order->getId();
 					$timeslotresult = $connection->fetchAll($timeslotsql);
 					if(!empty($timeslotresult)){
@@ -272,11 +301,13 @@ class Order extends \Magento\Backend\App\Action
 							"ROYY_PACKAGES" => $shipping_package_size_list,
 							"PNCO_NUMOFPACKS" => (int)$total_shipping_packages,
 							"STCODE"   => $stcode,
+							"PNCO_BLESSORDERSTEXT_SUBFORM"=>$ordergiftmsg,
 							"ORDERITEMS_SUBFORM" => $orderitem,
 							"SHIPTO2_SUBFORM" => $shipdetails,
 							"PAYMENTDEF_SUBFORM" => $paymentarray,
 							"DETAILS"  => $order->getId(),
-							"BRANCHNAME" => (string)$place_id
+							"BRANCHNAME" => (string)$place_id,
+							"PNCO_GIFTPACK"=>$pncogiftpack
 						);
 						$customerBillingStreet = $order->getBillingAddress()->getStreet(); 
 						if(count($customerBillingStreet) >= 1){
@@ -390,11 +421,13 @@ class Order extends \Magento\Backend\App\Action
 							"ROYY_PACKAGES" => $shipping_package_size_list,
 							"PNCO_NUMOFPACKS" => (int)$total_shipping_packages,
 							"STCODE"   => $stcode,
+							"PNCO_BLESSORDERSTEXT_SUBFORM"=>$ordergiftmsg,
 							"ORDERITEMS_SUBFORM" => $orderitem,
 							"SHIPTO2_SUBFORM" => $shipdetails,
 							"PAYMENTDEF_SUBFORM" => $paymentarray,
 							"DETAILS"  => $order->getId(),
-							"BRANCHNAME" => (string)$place_id
+							"BRANCHNAME" => (string)$place_id,
+							"PNCO_GIFTPACK"=>$pncogiftpack
 						);
 					}
 					
@@ -567,6 +600,7 @@ class Order extends \Magento\Backend\App\Action
 							$saveData1 = $model1->save();	
 						}
 					} 
+					
 				}
 			}
 		}
