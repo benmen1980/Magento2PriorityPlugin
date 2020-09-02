@@ -160,6 +160,22 @@ class PlaceOrder implements ObserverInterface
 					);
 					array_push($orderitem,$dsicount);
 				}
+				$giftwrapsql="select w.order_id, w.card_id, w.wrap_id, w.gift_message, w.price, m.sort_order as card_sort, r.sort_order as wrap_sort from amasty_giftwrap_order_wrap w inner join amasty_giftwrap_message_card_store m on w.card_id = m.message_card_id inner join amasty_giftwrap_wrap_store r on r.wrap_id = w.wrap_id where order_id = ".$order->getId();
+				$giftwrapresult = $connection->fetchAll($giftwrapsql);
+				if(!empty($giftwrapresult)){
+					$giftwrapcardid = array(
+						"PARTNAME" => $giftwrapresult[0]['card_sort'],
+						"TQUANT" => 1,
+						"VPRICE" => 0
+					);
+					array_push($orderitem,$giftwrapcardid);
+					$giftwrapid = array(
+						"PARTNAME" => $giftwrapresult[0]['wrap_sort'],
+						"TQUANT" => 1,
+						"VPRICE" => abs((float)$giftwrapresult[0]['price'])
+					);
+					array_push($orderitem,$giftwrapid);		
+				}
 				$username = $this->scopeConfig->getValue("settings/general/username", $storeScope);
 				$password = $this->scopeConfig->getValue("settings/general/password", $storeScope);
 				$application = $this->scopeConfig->getValue("settings/general/application", $storeScope);  
