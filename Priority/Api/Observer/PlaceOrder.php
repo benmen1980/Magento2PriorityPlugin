@@ -107,6 +107,9 @@ class PlaceOrder implements ObserverInterface
 					$paymentarray = array("PAYMENTCODE" => $paymentcode,"QPRICE" => (float)$order->getGrandTotal());
 				}
 				$orderid = $order->getIncrementId();
+				$orderdate = $this->_timezoneInterface
+					->date(new \DateTime($order->getCreatedAt()))
+					->format('Y-m-d');
 				if($order->getCustomerId() == ""){
 					$customerid = $this->scopeConfig->getValue("general_settings/more_settings_config/walk_in_customer", $storeScope);
 				} else {
@@ -298,7 +301,7 @@ class PlaceOrder implements ObserverInterface
 					$params = array(
 						"CUSTNAME" => 'G'.$orderid,
 						"CDES" => $custname,
-						"CURDATE"  => date("Y-m-d"),
+						"CURDATE"  => $orderdate,
 						"BOOKNUM"  => $orderid,
 						"PNCO_WEBNUMBER" => $orderid,
 						"PNCO_UDATEUDATE" => $date,
@@ -418,7 +421,7 @@ class PlaceOrder implements ObserverInterface
 				} else {
 					$params = array(
 						"CUSTNAME" => $customerid,
-						"CURDATE"  => date("Y-m-d"),
+						"CURDATE"  => $orderdate,
 						"BOOKNUM"  => $orderid,
 						"PNCO_WEBNUMBER" => $orderid,
 						"PNCO_UDATEUDATE" => $date,

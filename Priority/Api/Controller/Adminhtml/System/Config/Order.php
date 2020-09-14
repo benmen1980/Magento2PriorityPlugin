@@ -95,6 +95,9 @@ class Order extends \Magento\Backend\App\Action
 			}
 			foreach($orders as $order){
 				$orderid = $order->getIncrementId();
+				$orderdate = $this->_timezoneInterface
+					->date(new \DateTime($order->getCreatedAt()))
+					->format('Y-m-d');
 				if(!in_array($orderid,$order_ids)){
 					$date1 = $order->getCreatedAt();
 					$date2 = $schedulecronresult[0]['scheduled_at'];
@@ -311,7 +314,7 @@ class Order extends \Magento\Backend\App\Action
 							$params = array(
 								"CUSTNAME" => 'G'.$orderid,
 								"CDES" => $custname,
-								"CURDATE"  => date("Y-m-d"),
+								"CURDATE"  => $orderdate,
 								"BOOKNUM"  => $orderid,
 								"PNCO_WEBNUMBER" => $orderid,
 								"PNCO_UDATEUDATE" => $date,
@@ -431,7 +434,7 @@ class Order extends \Magento\Backend\App\Action
 						} else {
 							$params = array(
 								"CUSTNAME" => $customerid,
-								"CURDATE"  => date("Y-m-d"),
+								"CURDATE"  => $orderdate,
 								"BOOKNUM"  => $orderid,
 								"PNCO_WEBNUMBER" => $orderid,
 								"PNCO_UDATEUDATE" => $date,

@@ -17,6 +17,8 @@ class Repost extends \Magento\Backend\App\Action
     protected $scopeConfig;
 
     protected $storeManager;
+	
+	protected $_customerFactory;
 
     protected $_escaper;
 
@@ -31,7 +33,8 @@ class Repost extends \Magento\Backend\App\Action
 		\Magento\Sales\Api\Data\OrderInterface $order,
 		\Magento\Framework\App\Request\Http $request,
 		\Wyomind\AdvancedInventory\Model\StockRepository $stockRepository,
-		\Magento\Framework\Stdlib\DateTime\TimezoneInterface $timezoneInterface
+		\Magento\Framework\Stdlib\DateTime\TimezoneInterface $timezoneInterface,
+		\Magento\Customer\Model\CustomerFactory $customerFactory
     ) {
 		parent::__construct($context);
         $this->scopeConfig = $scopeConfig;
@@ -43,6 +46,7 @@ class Repost extends \Magento\Backend\App\Action
 		$this->order = $order;
 		$this->request = $request;
 		$this->_stockrepository = $stockRepository;
+		$this->_customerFactory = $customerFactory;
 		$this->_timezoneInterface = $timezoneInterface;
     }
 
@@ -102,6 +106,9 @@ class Repost extends \Magento\Backend\App\Action
 				$paymentarray = array("PAYMENTCODE" => $paymentcode,"QPRICE" => (float)$order->getGrandTotal());
 			}
 			$orderid = $order->getIncrementId();
+			$orderdate = $this->_timezoneInterface
+				->date(new \DateTime($order->getCreatedAt()))
+				->format('Y-m-d');	
 			if($order->getCustomerId() == ""){
 				$customerid = $this->scopeConfig->getValue("general_settings/more_settings_config/walk_in_customer", $storeScope);
 			} else {
@@ -297,7 +304,7 @@ class Repost extends \Magento\Backend\App\Action
 				$params = array(
 					"CUSTNAME" => 'G'.$orderid,
 					"CDES" => $custname,
-					"CURDATE"  => date("Y-m-d"),
+					"CURDATE"  => $orderdate,
 					"BOOKNUM"  => $orderid,
 					"PNCO_WEBNUMBER" => $orderid,
 					"PNCO_UDATEUDATE" => $date,
@@ -417,7 +424,7 @@ class Repost extends \Magento\Backend\App\Action
 			} else {
 				$params = array(
 					"CUSTNAME" => $customerid,
-					"CURDATE"  => date("Y-m-d"),
+					"CURDATE"  => $orderdate,
 					"BOOKNUM"  => $orderid,
 					"PNCO_WEBNUMBER" => $orderid,
 					"PNCO_UDATEUDATE" => $date,

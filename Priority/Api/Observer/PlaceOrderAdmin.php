@@ -76,6 +76,9 @@ class PlaceOrderAdmin implements ObserverInterface {
 			}
 			$customerid = $order->getCustomerId();
 			$orderid = $order->getIncrementId();
+			$orderdate = $this->_timezoneInterface
+					->date(new \DateTime($order->getCreatedAt()))
+					->format('Y-m-d');
 			$orderItems = $order->getAllItems();
 			$orderitem = array();
 			foreach ($order->getAllItems() as $item) {
@@ -278,7 +281,7 @@ class PlaceOrderAdmin implements ObserverInterface {
 				$params = array(
 					"CUSTNAME" => 'G'.$orderid,
 					"CDES" => $custname,
-					"CURDATE"  => date("Y-m-d"),
+					"CURDATE"  => $orderdate=$order,
 					"BOOKNUM"  => $orderid,
 					"PNCO_WEBNUMBER" => $orderid,
 					"PNCO_UDATEUDATE" => $date,
@@ -398,7 +401,7 @@ class PlaceOrderAdmin implements ObserverInterface {
 			} else {
 				$params = array(
 					"CUSTNAME" => $customerid,
-					"CURDATE"  => date("Y-m-d"),
+					"CURDATE"  => $orderdate=$order,
 					"BOOKNUM"  => $orderid,
 					"PNCO_WEBNUMBER" => $orderid,
 					"PNCO_UDATEUDATE" => $date,
