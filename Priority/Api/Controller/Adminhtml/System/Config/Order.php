@@ -105,7 +105,7 @@ class Order extends \Magento\Backend\App\Action
 					$dm1 = date('i', $date1);
 					$date2 = strtotime($date2);
 					$dm2 = date('i', $date2);
-					if($dm1 != $dm2) {
+					if($dm2 > $dm1) {
 						$shipping = $order->getShippingMethod();
 						$shipping = explode("_",$shipping);
 						$shippigCode = $shipping[0];
@@ -148,12 +148,29 @@ class Order extends \Magento\Backend\App\Action
 						}
 						$orderItems = $order->getAllItems();
 						$orderitem = array();
-						
 						foreach ($order->getAllItems() as $item) {	
-							$items['PARTNAME'] = $item->getSku();
-							$items['TQUANT'] = (int)$item->getQtyOrdered();
-							$items['VATPRICE'] = floatval($item->getRowTotal());
-							array_push($orderitem,$items);
+								
+								 $total=0;
+								
+								if($item->getRowTotal() == 0){						
+									$options = $item->getProductOptions();										
+									$jsonString = $options['bundle_selection_attributes'];
+									$data = json_decode($jsonString,true);
+									$total = $data['price'] * $item->getQtyOrdered();
+								}  else{
+									$total=$item->getRowTotal();
+								}		
+					
+								if($item->getProductType() == "simple")
+								{
+									$items['PARTNAME'] = $item->getSku();
+									$items['TQUANT'] = (int)$item->getQtyOrdered();
+									//$items['VATPRICE'] = floatval($item->getRowTotal());
+									$items['VATPRICE'] = round($total,2);
+									array_push($orderitem,$items);
+								}
+									
+				
 						}	
 						
 						$giftsql="select sum(gift_amount) as total from amasty_amgiftcard_quote aaq where aaq.quote_id = (select so.quote_id from sales_order so where so.entity_id=".$order->getId().")";

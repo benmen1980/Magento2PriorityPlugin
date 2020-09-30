@@ -82,10 +82,23 @@ class PlaceOrderAdmin implements ObserverInterface {
 			$orderItems = $order->getAllItems();
 			$orderitem = array();
 			foreach ($order->getAllItems() as $item) {
-				$items['PARTNAME'] = $item->getSku();
-				$items['TQUANT'] = (int)$item->getQtyOrdered();
-				$items['VPRICE'] = floatval($item->getPrice());
-				array_push($orderitem,$items);
+				$total=0;
+				if($item->getRowTotal()==0){						
+					$options=$item->getProductOptions();										
+					$jsonString = $options['bundle_selection_attributes'];
+					$data = json_decode($jsonString,true);
+					$total = $data['price'] * $item->getQtyOrdered();					
+				}	else {
+					$total=$item->getRowTotal();
+				}									  
+				if($item->getProductType()=="simple")
+				{
+					$items['PARTNAME'] = $item->getSku();
+					$items['TQUANT'] = (int)$item->getQtyOrdered();
+					//$items['VATPRICE'] = floatval($item->getRowTotal());
+					$items['VATPRICE'] = round($total,2);
+					array_push($orderitem,$items);
+				}
 			}
 			
 			$objectManager =  \Magento\Framework\App\ObjectManager::getInstance();
