@@ -84,7 +84,7 @@ class PlaceOrderAdmin implements ObserverInterface {
 			foreach ($order->getAllItems() as $item) {
 				$items['PARTNAME'] = $item->getSku();
 				$items['TQUANT'] = (int)$item->getQtyOrdered();
-				$items['VATPRICE'] = floatval($item->getRowTotal());
+				$items['VPRICE'] = floatval($item->getPrice());
 				array_push($orderitem,$items);
 			}
 			

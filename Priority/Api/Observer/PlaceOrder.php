@@ -120,7 +120,7 @@ class PlaceOrder implements ObserverInterface
 				foreach ($order->getAllItems() as $item) {	
 					$items['PARTNAME'] = $item->getSku();
 					$items['TQUANT'] = (int)$item->getQtyOrdered();
-					$items['VATPRICE'] = floatval($item->getRowTotal());
+					$items['VATPRICE'] = (float)$item->getRowTotal();
 					array_push($orderitem,$items);
 				}
 				$giftsql="select sum(gift_amount) as total from amasty_amgiftcard_quote aaq where aaq.quote_id = (select so.quote_id from sales_order so where so.entity_id=".$order->getId().")";

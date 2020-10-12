@@ -62,6 +62,8 @@ class Order extends \Magento\Backend\App\Action
 			$orders->addAttributeToFilter('created_at', ['gteq'=>$prev_date.' 00:00:00']);
 			$orders->addAttributeToFilter('created_at', ['lteq'=>$current_date.' 23:59:59']);
 			$orders->addFieldToFilter('status', 'processing');
+
+            $orders->getSelect()->orWhere('is_virtual = 1 and STATUS = "complete" and created_at >= "' . $prev_date.' 00:00:00"' . ' AND created_at <= "' . $current_date.' 23:59:59"', 'OR');
 			$objectManager =  \Magento\Framework\App\ObjectManager::getInstance();
 			$connection = $objectManager->get('Magento\Framework\App\ResourceConnection')->getConnection('\Magento\Framework\App\ResourceConnection::DEFAULT_CONNECTION');
 			$objDate = $objectManager->create('Magento\Framework\Stdlib\DateTime\DateTime');	
@@ -105,7 +107,10 @@ class Order extends \Magento\Backend\App\Action
 					$dm1 = date('i', $date1);
 					$date2 = strtotime($date2);
 					$dm2 = date('i', $date2);
-					if($dm2 > $dm1) {
+
+                    $isVirtual = $order->getIsVirtual();
+
+					if($dm1 != $dm2) {
 						$shipping = $order->getShippingMethod();
 						$shipping = explode("_",$shipping);
 						$shippigCode = $shipping[0];
@@ -130,7 +135,7 @@ class Order extends \Magento\Backend\App\Action
 							$paymentarray = array("PAYMENTCODE" => $paymentcode,"QPRICE" => (float)$order->getGrandTotal());
 						}
 						$status = $order->getState();
-						$warehouses = $this->_stockrepository->getAssignationByOrderId($order->getId());
+						$warehouses = !$isVirtual ? $this->_stockrepository->getAssignationByOrderId($order->getId()) : 1;
 						$warehouse_data = json_decode($warehouses,true);
 						if($order->getStoreId() == 3){
 							$place_id = 4;
@@ -148,11 +153,12 @@ class Order extends \Magento\Backend\App\Action
 						}
 						$orderItems = $order->getAllItems();
 						$orderitem = array();
+						
 						foreach ($order->getAllItems() as $item) {	
-								$items['PARTNAME'] = $item->getSku();
-								$items['TQUANT'] = (int)$item->getQtyOrdered();
-								$items['VATPRICE'] = floatval($item->getRowTotal());
-								array_push($orderitem,$items);		
+							$items['PARTNAME'] = $item->getSku();
+							$items['TQUANT'] = (int)$item->getQtyOrdered();
+							$items['VATPRICE'] = floatval($item->getRowTotal());
+							array_push($orderitem,$items);
 						}	
 						
 						$giftsql="select sum(gift_amount) as total from amasty_amgiftcard_quote aaq where aaq.quote_id = (select so.quote_id from sales_order so where so.entity_id=".$order->getId().")";
@@ -296,15 +302,17 @@ class Order extends \Magento\Backend\App\Action
 						} else {
 							$timestart = "";
 							$timeend = "";
-						}				
+						}
+
+						$address = (!$isVirtual ? $order->getShippingAddress() : $order->getBillingAddress());
 						
 						$shipdetails = array(
-							"PNCO_FIRSTNAME" => $order->getShippingAddress()->getFirstName(),
-							"PNCO_LASTNAME" => $order->getShippingAddress()->getLastName(),
-							"PNCO_STREET" => $order->getShippingAddress()->getStreetLine(1),
-							"STATE" => $order->getShippingAddress()->getCity(),  
-							"ZIP" => $order->getShippingAddress()->getPostcode(),  
-							"PHONENUM" => $order->getShippingAddress()->getTelephone(),
+							"PNCO_FIRSTNAME" => $address->getFirstName(),
+							"PNCO_LASTNAME" => $address->getLastName(),
+							"PNCO_STREET" => $address->getStreetLine(1),
+							"STATE" => $address->getCity(),
+							"ZIP" => $address->getPostcode(),
+							"PHONENUM" => $address->getTelephone(),
 							"PNCO_HOUSENUM" => $house,	
 							"PNCO_APPT" => $apartment
 						);
@@ -339,7 +347,7 @@ class Order extends \Magento\Backend\App\Action
 							} else {
 								$billingstreet = $customerBillingStreet[0];
 							}	
-							$customerShippingStreet = $order->getShippingAddress()->getStreet(); 
+							$customerShippingStreet = $address->getStreet();
 							if(count($customerShippingStreet) >= 1){
 								$shippingstreet = implode(" ",$customerShippingStreet);
 							} else {
@@ -530,7 +538,7 @@ class Order extends \Magento\Backend\App\Action
 							} else {
 								$billingstreet = $customerBillingStreet[0];
 							}	
-							$customerShippingStreet = $order->getShippingAddress()->getStreet(); 
+							$customerShippingStreet = $address->getStreet();
 							if(count($customerShippingStreet) >= 1){
 								$shippingstreet = implode(" ",$customerShippingStreet);
 							} else {
