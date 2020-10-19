@@ -234,7 +234,7 @@ class Order extends \Magento\Backend\App\Action
 							);
 							array_push($orderitem,$dsicount);
 						}
-						$giftwrapsql="select order_wrap.order_id, order_wrap.card_id, order_wrap.wrap_id, order_wrap.gift_message, order_wrap.price,order_card.sort_order as card_sort, order_wrap_store.sort_order as wrap_sort from amasty_giftwrap_order_wrap order_wrap inner join amasty_giftwrap_order_item order_item on order_item.quote_wrap_id = order_wrap.entity_id left join amasty_giftwrap_message_card_store order_card on order_wrap.card_id = order_card.message_card_id left join amasty_giftwrap_wrap_store order_wrap_store on order_wrap.wrap_id = order_wrap_store.wrap_id where order_wrap.order_id = ".$order->getId();
+						$giftwrapsql="select w.order_id, w.card_id, w.wrap_id, w.gift_message, w.price, m.sort_order as card_sort, r.sort_order as wrap_sort from amasty_giftwrap_order_wrap w inner join amasty_giftwrap_message_card_store m on w.card_id = m.message_card_id inner join amasty_giftwrap_wrap_store r on r.wrap_id = w.wrap_id where order_id = ".$order->getId();
 						$giftwrapresult = $connection->fetchAll($giftwrapsql);
 						if(!empty($giftwrapresult)){
 							$giftwrapcardid = array(
