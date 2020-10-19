@@ -21,12 +21,15 @@ class Repost extends \Magento\Backend\App\Action
 	protected $_customerFactory;
 
     protected $_escaper;
+	
+	protected $_logger;
 
     public function __construct(
 		\Magento\Backend\App\Action\Context $context,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Priority\Api\Model\TransactionsFactory $transaction,
+		\Psr\Log\LoggerInterface $_logger,
         \Magento\Framework\Mail\Template\TransportBuilder $transportBuilder,
         \Magento\Framework\Translate\Inline\StateInterface $inlineTranslation,
         \Magento\Framework\Escaper $escaper,
@@ -40,6 +43,7 @@ class Repost extends \Magento\Backend\App\Action
         $this->scopeConfig = $scopeConfig;
         $this->storeManager = $storeManager;
         $this->_transactions = $transaction;
+		$this->_logger = $_logger;
         $this->_transportBuilder = $transportBuilder;
         $this->inlineTranslation = $inlineTranslation;
         $this->_escaper = $escaper;
@@ -116,11 +120,44 @@ class Repost extends \Magento\Backend\App\Action
 			}
 			$orderItems = $order->getAllItems();
 			$orderitem = array();
+			$rowtotal = 0;
+			$bundletotal = 0;
+			foreach ($order->getAllItems() as $item) {
+				if($item->getRowTotal() == 0){						
+					$options=$item->getProductOptions();										
+					$jsonString = $options['bundle_selection_attributes'];
+					$data = json_decode($jsonString,true);
+					$qtytotal = $data['price'] * $item->getQtyOrdered();	
+					$rowtotal = $rowtotal + $qtytotal;
+				}
+				if($item->getProductType() != "simple")
+				{
+					$bundletotal = $item->getRowTotal();
+				}					
+			}
 			foreach ($order->getAllItems() as $item) {	
-				$items['PARTNAME'] = $item->getSku();
-				$items['TQUANT'] = (int)$item->getQtyOrdered();
-				$items['VATPRICE'] = (float)$item->getRowTotal();
-				array_push($orderitem,$items);
+				$total = 0;
+				if($item->getRowTotal() == 0){						
+					$options=$item->getProductOptions();										
+					$jsonString = $options['bundle_selection_attributes'];
+					$data = json_decode($jsonString,true);
+					$qtytotal = $data['price'] * $item->getQtyOrdered();
+					if($bundletotal != $rowtotal){
+						$total = ($qtytotal / $rowtotal) * ($bundletotal - $rowtotal) + $qtytotal;
+					} else {
+						$total = $qtytotal;
+					}
+					
+				} else {
+					$total = $item->getRowTotal();
+				}							  
+				if($item->getProductType() == "simple")
+				{
+					$items['PARTNAME'] = $item->getSku();
+					$items['TQUANT'] = (int)$item->getQtyOrdered();
+					$items['VATPRICE'] = round($total,2);
+					array_push($orderitem,$items);
+				}
 			}
 			$giftsql="select sum(gift_amount) as total from amasty_amgiftcard_quote aaq where aaq.quote_id = (select so.quote_id from sales_order so where so.entity_id=".$order->getId().")";
 			$giftresult = $connection->fetchAll($giftsql);

@@ -81,11 +81,44 @@ class PlaceOrderAdmin implements ObserverInterface {
 					->format('Y-m-d');
 			$orderItems = $order->getAllItems();
 			$orderitem = array();
+			$rowtotal = 0;
+			$bundletotal = 0;
 			foreach ($order->getAllItems() as $item) {
-				$items['PARTNAME'] = $item->getSku();
-				$items['TQUANT'] = (int)$item->getQtyOrdered();
-				$items['VPRICE'] = floatval($item->getPrice());
-				array_push($orderitem,$items);
+				if($item->getRowTotal() == 0){						
+					$options=$item->getProductOptions();										
+					$jsonString = $options['bundle_selection_attributes'];
+					$data = json_decode($jsonString,true);
+					$qtytotal = $data['price'] * $item->getQtyOrdered();	
+					$rowtotal = $rowtotal + $qtytotal;
+				}
+				if($item->getProductType() != "simple")
+				{
+					$bundletotal = $item->getRowTotal();
+				}					
+			}
+			foreach ($order->getAllItems() as $item) {	
+				$total = 0;
+				if($item->getRowTotal() == 0){						
+					$options=$item->getProductOptions();										
+					$jsonString = $options['bundle_selection_attributes'];
+					$data = json_decode($jsonString,true);
+					$qtytotal = $data['price'] * $item->getQtyOrdered();
+					if($bundletotal != $rowtotal){
+						$total = ($qtytotal / $rowtotal) * ($bundletotal - $rowtotal) + $qtytotal;
+					} else {
+						$total = $qtytotal;
+					}
+					
+				} else {
+					$total = $item->getRowTotal();
+				}							  
+				if($item->getProductType() == "simple")
+				{
+					$items['PARTNAME'] = $item->getSku();
+					$items['TQUANT'] = (int)$item->getQtyOrdered();
+					$items['VATPRICE'] = round($total,2);
+					array_push($orderitem,$items);
+				}
 			}
 			
 			$objectManager =  \Magento\Framework\App\ObjectManager::getInstance();
