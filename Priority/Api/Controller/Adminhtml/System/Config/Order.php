@@ -110,7 +110,7 @@ class Order extends \Magento\Backend\App\Action
 
                     $isVirtual = $order->getIsVirtual();
 
-					if($dm1 != $dm2) {
+					if($dm1 > $dm2) {
 						$shipping = $order->getShippingMethod();
 						$shipping = explode("_",$shipping);
 						$shippigCode = $shipping[0];
