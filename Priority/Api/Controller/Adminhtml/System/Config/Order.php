@@ -157,12 +157,14 @@ class Order extends \Magento\Backend\App\Action
 						$rowtotal = 0;
 						$bundletotal = 0;
 						foreach ($order->getAllItems() as $item) {
-							if($item->getRowTotal() == 0){						
-								$options=$item->getProductOptions();										
-								$jsonString = $options['bundle_selection_attributes'];
-								$data = json_decode($jsonString,true);
-								$qtytotal = $data['price'] * $item->getQtyOrdered();	
-								$rowtotal = $rowtotal + $qtytotal;
+							if($item->getRowTotal() == 0){	
+								$options = $item->getProductOptions();	
+								if(isset($options['bundle_selection_attributes'])){
+								    $jsonString = $options['bundle_selection_attributes'];
+									$data = json_decode($jsonString,true);
+									$qtytotal = $data['price'] * $item->getQtyOrdered();	
+									$rowtotal = $rowtotal + $qtytotal;
+								}
 							}
 							if($item->getProductType() != "simple")
 							{
@@ -172,16 +174,19 @@ class Order extends \Magento\Backend\App\Action
 						foreach ($order->getAllItems() as $item) {	
 							$total = 0;
 							if($item->getRowTotal() == 0){						
-								$options=$item->getProductOptions();										
-								$jsonString = $options['bundle_selection_attributes'];
-								$data = json_decode($jsonString,true);
-								$qtytotal = $data['price'] * $item->getQtyOrdered();
-								if($bundletotal != $rowtotal){
-									$total = ($qtytotal / $rowtotal) * ($bundletotal - $rowtotal) + $qtytotal;
+								$options=$item->getProductOptions();		
+								if(isset($options['bundle_selection_attributes'])){
+									$jsonString = $options['bundle_selection_attributes'];
+									$data = json_decode($jsonString,true);
+									$qtytotal = $data['price'] * $item->getQtyOrdered();
+									if($bundletotal != $rowtotal){
+										$total = ($qtytotal / $rowtotal) * ($bundletotal - $rowtotal) + $qtytotal;
+									} else {
+										$total = $qtytotal;
+									}
 								} else {
-									$total = $qtytotal;
+									$total = $item->getRowTotal();
 								}
-								
 							} else {
 								$total = $item->getRowTotal();
 							}							  
